@@ -16,7 +16,6 @@ htmlcov/
 
 # 输出
 output/
-*.md
 
 # IDE
 .vscode/
