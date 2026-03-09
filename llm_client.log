@@ -1,0 +1,74 @@
+2026-03-09 10:04:06,107 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 10:04:07,220 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2026-03-09 10:04:10,539 - httpx - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2026-03-09 10:04:10,566 - httpx - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2026-03-09 10:04:27,189 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-03-09 10:04:27,189 - src.llm_client - INFO - 使用模型: llama3.1:8b
+2026-03-09 10:04:56,771 - src.llm_client - INFO - Ollama请求成功
+2026-03-09 10:05:39,892 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 10:05:40,977 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2026-03-09 10:05:44,244 - httpx - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2026-03-09 10:05:44,264 - httpx - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2026-03-09 10:06:39,309 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-03-09 10:06:39,309 - src.llm_client - INFO - 使用模型: llama3.1:8b
+2026-03-09 10:07:02,201 - src.llm_client - INFO - Ollama请求成功
+2026-03-09 10:20:35,509 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 10:20:35,574 - __main__ - INFO - 正在扫描项目目录: C:\Users\sherry\project
+2026-03-09 10:20:35,575 - __main__ - INFO - 找到项目: anji-whitetea-trade
+2026-03-09 10:20:35,575 - __main__ - INFO - 找到项目: exc-adm
+2026-03-09 10:20:35,577 - __main__ - INFO - 找到项目: exc-pay
+2026-03-09 10:20:35,577 - __main__ - INFO - 找到项目: hydra-pay
+2026-03-09 10:20:35,578 - __main__ - INFO - 找到项目: mcp-server-mysql
+2026-03-09 10:20:35,579 - __main__ - INFO - 找到项目: mysql_mcp_server
+2026-03-09 10:20:35,580 - __main__ - INFO - 找到项目: spjvm-adm
+2026-03-09 10:20:36,714 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2026-03-09 10:20:38,088 - __main__ - INFO - 找到项目: naps/NAPS-AC
+2026-03-09 10:20:38,088 - __main__ - INFO - 找到项目: naps/NAPS-Common
+2026-03-09 10:20:38,089 - __main__ - INFO - 找到项目: naps/NAPS-Gateway
+2026-03-09 10:20:38,089 - __main__ - INFO - 找到项目: naps/NAPS-OC
+2026-03-09 10:20:38,090 - __main__ - INFO - 找到项目: naps/NAPS-Sharding
+2026-03-09 10:20:38,090 - __main__ - INFO - 找到项目: naps/NAPS-TC
+2026-03-09 10:20:38,091 - __main__ - INFO - 找到项目: naps/NAPS-UC
+2026-03-09 10:20:38,516 - __main__ - INFO - 找到项目: naps2.0/NAPS-CM
+2026-03-09 10:20:38,517 - __main__ - INFO - 找到项目: naps2.0/NAPS-GW
+2026-03-09 10:20:38,518 - __main__ - INFO - 找到项目: naps2.0/NAPS-TM
+2026-03-09 10:20:39,651 - __main__ - INFO - 共找到 17 个项目
+2026-03-09 10:20:39,939 - httpx - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2026-03-09 10:20:39,951 - httpx - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2026-03-09 10:20:49,949 - __main__ - INFO - 选中的项目: ['naps/NAPS-TC']
+2026-03-09 10:20:49,950 - __main__ - INFO - 正在获取项目分支: naps/NAPS-TC
+2026-03-09 10:20:49,950 - __main__ - INFO - 完整路径: C:\Users\sherry\project\naps\NAPS-TC
+2026-03-09 10:20:49,951 - __main__ - INFO - 项目 naps/NAPS-TC 找到 14 个分支
+2026-03-09 10:20:49,951 - __main__ - INFO - 可用分支: ['naps/NAPS-TC/feature-20260227-user-bind-card', 'naps/NAPS-TC/feature-20260304-refund-notifyurl', 'naps/NAPS-TC/naps-tc-america', 'naps/NAPS-TC/naps-tc-async-bookkeep', 'naps/NAPS-TC/naps-tc-dev', 'naps/NAPS-TC/naps-tc-error-code', 'naps/NAPS-TC/naps-tc-file-segmentation', 'naps/NAPS-TC/naps-tc-germany-checus', 'naps/NAPS-TC/naps-tc-germany-new-link', 'naps/NAPS-TC/naps-tc-mb-mobile', 'naps/NAPS-TC/naps-tc-new-link', 'naps/NAPS-TC/naps-tc-new-link-aes-secret', 'naps/NAPS-TC/naps-tc-sg-wallet', 'naps/NAPS-TC/naps-tc-sg-wallet-merge']
+2026-03-09 10:20:56,070 - __main__ - INFO - 选中的项目: ['naps/NAPS-TC', 'naps/NAPS-UC']
+2026-03-09 10:20:56,070 - __main__ - INFO - 正在获取项目分支: naps/NAPS-TC
+2026-03-09 10:20:56,070 - __main__ - INFO - 完整路径: C:\Users\sherry\project\naps\NAPS-TC
+2026-03-09 10:20:56,074 - __main__ - INFO - 项目 naps/NAPS-TC 找到 14 个分支
+2026-03-09 10:20:56,074 - __main__ - INFO - 正在获取项目分支: naps/NAPS-UC
+2026-03-09 10:20:56,075 - __main__ - INFO - 完整路径: C:\Users\sherry\project\naps\NAPS-UC
+2026-03-09 10:20:56,079 - __main__ - INFO - 项目 naps/NAPS-UC 找到 2 个分支
+2026-03-09 10:20:56,080 - __main__ - INFO - 可用分支: ['naps/NAPS-TC/feature-20260227-user-bind-card', 'naps/NAPS-TC/feature-20260304-refund-notifyurl', 'naps/NAPS-TC/naps-tc-america', 'naps/NAPS-TC/naps-tc-async-bookkeep', 'naps/NAPS-TC/naps-tc-dev', 'naps/NAPS-TC/naps-tc-error-code', 'naps/NAPS-TC/naps-tc-file-segmentation', 'naps/NAPS-TC/naps-tc-germany-checus', 'naps/NAPS-TC/naps-tc-germany-new-link', 'naps/NAPS-TC/naps-tc-mb-mobile', 'naps/NAPS-TC/naps-tc-new-link', 'naps/NAPS-TC/naps-tc-new-link-aes-secret', 'naps/NAPS-TC/naps-tc-sg-wallet', 'naps/NAPS-TC/naps-tc-sg-wallet-merge', 'naps/NAPS-UC/naps-uc-dev', 'naps/NAPS-UC/naps-uc-mer-update-fix-1014']
+2026-03-09 10:52:37,431 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 10:52:38,479 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2026-03-09 10:52:47,103 - httpx - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2026-03-09 10:52:47,147 - httpx - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2026-03-09 11:43:46,640 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 11:43:47,642 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2026-03-09 11:43:51,421 - httpx - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2026-03-09 11:43:51,464 - httpx - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2026-03-09 11:52:19,903 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 11:52:21,052 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2026-03-09 11:52:24,624 - httpx - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2026-03-09 11:52:24,659 - httpx - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2026-03-09 11:52:59,785 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 11:52:59,786 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-03-09 11:52:59,786 - src.llm_client - INFO - 使用模型: llama3.1:8b
+2026-03-09 11:53:30,116 - src.llm_client - INFO - Ollama请求成功
+2026-03-09 13:36:13,381 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 13:36:14,551 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2026-03-09 13:36:22,655 - httpx - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2026-03-09 13:36:22,678 - httpx - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2026-03-09 13:41:26,341 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: llama3.1:8b
+2026-03-09 13:41:26,341 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-03-09 13:41:26,341 - src.llm_client - INFO - 使用模型: llama3.1:8b
+2026-03-09 13:41:56,427 - src.llm_client - INFO - Ollama请求成功
