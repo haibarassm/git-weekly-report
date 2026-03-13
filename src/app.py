@@ -38,17 +38,63 @@ class ReportApp:
         if not self.base_dir.exists():
             return []
 
+        import logging
+        import os
+        from pathlib import Path
+
+        logger = logging.getLogger(__name__)
+        logger.info(f"开始扫描项目目录: {self.base_dir}")
+
         projects = []
-        for item in self.base_dir.rglob('*'):
-            if item.is_dir() and not item.name.startswith('.'):
+        max_depth = 4  # 支持最多4层子目录
+        checked_count = 0
+        max_checks = 200  # 最多检查200个目录
+
+        # 使用更快的 Git 仓库检测方法
+        def is_git_repo_fast(path):
+            """快速检测 Git 仓库（只检查 .git 目录是否存在）"""
+            git_dir = os.path.join(path, '.git')
+            return os.path.exists(git_dir)
+
+        try:
+            # 递归扫描目录
+            for root, dirs, files in os.walk(self.base_dir):
+                # 跳过隐藏目录和常见的非项目目录
+                dirs[:] = [d for d in dirs if not d.startswith('.') and d not in {
+                    'node_modules', '__pycache__', 'venv', '.venv',
+                    'env', 'dist', 'build', 'target', 'bin', 'obj'
+                }]
+
+                # 计算相对深度
                 try:
-                    if self.git_utils.validate_repo(str(item)):
-                        relative_path = item.relative_to(self.base_dir)
-                        project_name = str(relative_path).replace('\\', '/')
-                        projects.append(project_name)
-                except Exception:
+                    rel_path = Path(root).relative_to(self.base_dir)
+                    depth = len(rel_path.parts)
+                except ValueError:
                     continue
 
+                if depth > max_depth:
+                    # 超过最大深度，不再深入
+                    dirs[:] = []
+                    continue
+
+                if checked_count >= max_checks:
+                    logger.warning(f"已达到最大检查数量限制 ({max_checks})，停止扫描")
+                    break
+
+                checked_count += 1
+                try:
+                    if is_git_repo_fast(root):
+                        project_name = str(rel_path).replace('\\', '/')
+                        projects.append(project_name)
+                        logger.info(f"找到项目: {project_name}")
+                except Exception as e:
+                    logger.debug(f"验证目录失败 {root}: {e}")
+                    continue
+
+        except Exception as e:
+            logger.error(f"扫描项目目录时出错: {e}")
+
+        logger.info(f"扫描完成，找到 {len(projects)} 个项目")
         return sorted(projects) if projects else []
 
     def get_branches(self, project_name: str):
@@ -57,12 +103,15 @@ class ReportApp:
             return []
 
         try:
-            project_path = self.base_dir / project_name.replace('/', '\\')
+            # 使用 pathlib.Path 正确处理跨平台路径
+            project_path = self.base_dir / project_name
             if not self.git_utils.validate_repo(str(project_path)):
                 return []
             branches = self.git_utils.get_branches(str(project_path))
             return branches
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"获取分支失败: {e}, project_name={project_name}, base_dir={self.base_dir}")
             return []
 
     def add_branches(self, current_selected: list, current_project: str, branches_to_add: list):
@@ -116,7 +165,8 @@ class ReportApp:
             # 收集所有提交记录
             all_commits = []
             for project_name, branch_list in branch_info.items():
-                project_path = self.base_dir / project_name.replace('/', '\\')
+                # 使用 pathlib.Path 正确处理跨平台路径
+                project_path = self.base_dir / project_name
 
                 if not self.git_utils.validate_repo(str(project_path)):
                     return f"无效的Git仓库: {project_path}", None
@@ -379,19 +429,45 @@ class ReportApp:
 
 def create_app():
     """创建Gradio应用实例"""
+    print("[DEBUG] Creating ReportApp instance...", flush=True)
     report_app = ReportApp()
-    return report_app.create_ui()
+    print("[DEBUG] ReportApp created successfully", flush=True)
+    print("[DEBUG] Creating UI...", flush=True)
+    ui = report_app.create_ui()
+    print("[DEBUG] UI created successfully", flush=True)
+    return ui
 
 
 if __name__ == "__main__":
     import os
-    app = create_app()
-    output_dir = os.path.abspath("output")
-    os.makedirs(output_dir, exist_ok=True)
+    import logging
+    logging.basicConfig(level=logging.INFO)
 
-    app.launch(
-        server_name="127.0.0.1",
-        server_port=7860,
-        share=False,
-        allowed_paths=[output_dir],
-    )
+    print("=== 开始启动 Gradio 应用 ===")
+    print(f"当前工作目录: {os.getcwd()}")
+    print(f"Python 路径: {sys.path}")
+
+    try:
+        print("创建应用...")
+        app = create_app()
+        print("应用创建成功！")
+
+        output_dir = os.path.abspath("output")
+        os.makedirs(output_dir, exist_ok=True)
+        print(f"输出目录: {output_dir}")
+
+        # 支持容器环境，使用 0.0.0.0 监听所有接口
+        server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
+        print(f"准备启动服务器: {server_name}:7860")
+
+        app.launch(
+            server_name=server_name,
+            server_port=7860,
+            share=False,
+            allowed_paths=[output_dir],
+        )
+    except Exception as e:
+        print(f"启动失败: {e}")
+        import traceback
+        traceback.print_exc()
+        raise

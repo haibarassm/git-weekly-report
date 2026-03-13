@@ -19,9 +19,10 @@ RUN mkdir -p /app/output /app/project
 
 # 设置环境变量
 ENV PROJECT_BASE_DIR=/app/project
+ENV PYTHONPATH=/app/src:$PYTHONPATH
 
 # 暴露Gradio端口
 EXPOSE 7860
 
-# 启动命令
-CMD ["python", "-m", "src.app"]
+# 启动命令 - 使用启动脚本
+CMD ["python", "/app/run_app.py"]
