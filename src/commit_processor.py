@@ -38,7 +38,7 @@ class CommitFilter:
     MIN_MESSAGE_LENGTH = 5
 
     @classmethod
-    def should_filter(cls, commit_message: str) -> bool:
+    def should_filter(cls, commit_message: str) -> tuple[bool, str]:
         """
         判断 commit 是否应该被过滤
 
@@ -46,21 +46,22 @@ class CommitFilter:
             commit_message: commit 消息
 
         Returns:
-            True 表示应该被过滤（丢弃），False 表示保留
+            (是否过滤, 过滤原因)
         """
         # 规则1: 包含 "Merge branch"
         if "Merge branch" in commit_message:
-            return True
+            return True, "Merge branch"
 
         # 规则2: 包含 "test"
         if "test" in commit_message:
-            return True
+            return True, "包含test"
 
         # 规则3: message 长度 < 5
-        if len(commit_message.strip()) < cls.MIN_MESSAGE_LENGTH:
-            return True
+        stripped = commit_message.strip()
+        if len(stripped) < cls.MIN_MESSAGE_LENGTH:
+            return True, f"长度<5 (实际{len(stripped)}字符)"
 
-        return False
+        return False, ""
 
     @classmethod
     def filter_commits(cls, commits: List[Dict]) -> List[Dict]:
@@ -77,12 +78,18 @@ class CommitFilter:
         logger = logging.getLogger(__name__)
 
         filtered = []
+        filter_stats = {}
+
         for commit in commits:
-            if cls.should_filter(commit['message']):
-                logger.debug(f"过滤: {commit['message'][:50]}...")
+            should_filt, reason = cls.should_filter(commit['message'])
+            if should_filt:
+                filter_stats[reason] = filter_stats.get(reason, 0) + 1
+                commit_hash = commit.get('hash', '')[:7]
+                logger.info(f"  [过滤] {commit_hash} | {reason} | {commit['message'][:60]}")
             else:
                 filtered.append(commit)
 
+        logger.info(f"过滤统计: {filter_stats}")
         return filtered
 
 
@@ -248,10 +255,17 @@ class CommitClassifier:
         Returns:
             分类后的 commit 列表（字典格式）
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         classified = []
         for commit in commits:
             result = cls.classify(commit)
             classified.append(result.to_dict())
+            # 记录分类结果
+            commit_hash = commit.get('hash', '')[:7]
+            logger.info(f"  [{result.type}/{result.scope}] {commit_hash} | {result.message[:60]}")
+
         return classified
 
 
@@ -265,10 +279,14 @@ def process_commits(commits: List[Dict]) -> List[Dict]:
     Returns:
         处理后的 commit 列表
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
     # 步骤1: 过滤
     filtered = CommitFilter.filter_commits(commits)
 
     # 步骤2: 分类
+    logger.info(">>> 步骤2: 分类 commit")
     classified = CommitClassifier.classify_commits(filtered)
 
     return classified

@@ -187,21 +187,26 @@ class ReportApp:
 
             import logging
             logger = logging.getLogger(__name__)
-            logger.info(f"V0.2: 收集到 {len(all_commits)} 条原始 commit")
+            logger.info("=" * 60)
+            logger.info("V0.2: Commit 处理开始")
+            logger.info(f"收集到 {len(all_commits)} 条原始 commit")
+            logger.info("=" * 60)
 
             # V0.2: 对 commits 进行过滤和分类
+            logger.info(">>> 步骤1: 过滤 commit")
             processed_commits = process_commits(all_commits)
 
             filtered_count = len(all_commits) - len(processed_commits)
-            logger.info(f"V0.2: 过滤掉 {filtered_count} 条 commit (Merge branch/test/短消息)")
-            logger.info(f"V0.2: 保留 {len(processed_commits)} 条有效 commit")
+            logger.info("=" * 60)
+            logger.info(f">>> 过滤完成: 保留 {len(processed_commits)} 条，过滤掉 {filtered_count} 条")
 
             # 显示分类结果
             type_count = {}
             for commit in processed_commits:
                 t = commit.get('type', 'unknown')
                 type_count[t] = type_count.get(t, 0) + 1
-            logger.info(f"V0.2: 分类结果 - {type_count}")
+            logger.info(f">>> 分类统计: {type_count}")
+            logger.info("=" * 60)
 
             if not processed_commits:
                 return f"过滤后没有有效的提交记录。", ""
