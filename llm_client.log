@@ -138,3 +138,67 @@
 2026-04-01 11:04:40,928 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
 2026-04-01 11:04:40,928 - src.llm_client - INFO - 使用模型: qwen2.5:14b
 2026-04-01 11:04:40,928 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 12:13:19,373 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,374 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,374 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,375 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,376 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,376 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,508 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,508 - src.app - INFO - 开始扫描项目目录: C:\Users\sherry\AppData\Local\Temp\tmpy49_10oa
+2026-04-01 12:13:19,508 - src.app - INFO - 扫描完成，找到 0 个项目
+2026-04-01 12:13:19,731 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,731 - src.app - INFO - 开始扫描项目目录: C:\Users\sherry\AppData\Local\Temp\tmpj9aziylb
+2026-04-01 12:13:19,732 - src.app - INFO - 找到项目: project1
+2026-04-01 12:13:19,732 - src.app - INFO - 找到项目: project2
+2026-04-01 12:13:19,732 - src.app - INFO - 扫描完成，找到 2 个项目
+2026-04-01 12:13:19,739 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -     标准: [feat(default)] -> [feature/default]
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -   [feature/default] 001 | 添加新功能
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -     解析失败: '修复登录问题...'
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -     关键词: [fix/default]
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -   [fix/default] 002 | 修复登录问题
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -     解析失败: '新加坡改动上线...'
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -     关键词: [feature/default]
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -   [feature/default] 003 | 新加坡改动上线
+2026-04-01 12:13:19,739 - src.commit_processor - INFO -     解析失败: '新加坡xxx改动合并德国...'
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -     关键词: [feature/default]
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -     解析失败: '修复登录问题...'
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -     关键词: [fix/default]
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -     标准: [fix(perms)] -> [fix/perms]
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 001 | Merge branch | Merge branch 'feature'
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 002 | 包含test | fix: test bug
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 003 | 长度<5 (实际3字符) | abc
+2026-04-01 12:13:19,740 - src.commit_processor - INFO - 过滤统计: {'Merge branch': 1, '包含test': 1, '长度<5 (实际3字符)': 1}
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 001 | Merge branch | Merge branch
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 002 | 包含test | test
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 003 | 长度<5 (实际3字符) | fix
+2026-04-01 12:13:19,740 - src.commit_processor - INFO - 过滤统计: {'Merge branch': 1, '包含test': 1, '长度<5 (实际3字符)': 1}
+2026-04-01 12:13:19,740 - src.commit_processor - INFO - >>> 步骤2: 分类 commit
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 001 | Merge branch | Merge branch 'feature'
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 002 | 包含test | test: 单元测试
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [过滤] 003 | 长度<5 (实际3字符) | fix
+2026-04-01 12:13:19,740 - src.commit_processor - INFO - 过滤统计: {'Merge branch': 1, '包含test': 1, '长度<5 (实际3字符)': 1}
+2026-04-01 12:13:19,740 - src.commit_processor - INFO - >>> 步骤2: 分类 commit
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -     标准: [feat(default)] -> [feature/default]
+2026-04-01 12:13:19,740 - src.commit_processor - INFO -   [feature/default] 004 | 添加用户登录
+2026-04-01 12:13:19,741 - src.commit_processor - INFO -     解析失败: '修复登录问题...'
+2026-04-01 12:13:19,741 - src.commit_processor - INFO -     关键词: [fix/default]
+2026-04-01 12:13:19,741 - src.commit_processor - INFO -   [fix/default] 005 | 修复登录问题
+2026-04-01 12:13:19,741 - src.commit_processor - INFO -     解析失败: '新加坡xxx改动合并德国...'
+2026-04-01 12:13:19,741 - src.commit_processor - INFO -     关键词: [feature/default]
+2026-04-01 12:13:19,741 - src.commit_processor - INFO -   [feature/default] 006 | 新加坡xxx改动合并德国
+2026-04-01 12:13:19,741 - src.commit_processor - INFO - 过滤统计: {}
+2026-04-01 12:13:19,741 - src.commit_processor - INFO - >>> 步骤2: 分类 commit
+2026-04-01 12:13:19,905 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 12:13:19,905 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 12:13:19,905 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 12:13:19,905 - src.llm_client - ERROR - Ollama API请求失败: 连接失败
+2026-04-01 12:13:19,905 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 12:13:19,905 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 12:13:19,905 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 12:13:19,905 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 12:13:19,905 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 12:13:19,907 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 12:13:19,907 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 12:13:19,907 - src.llm_client - INFO - Ollama请求成功

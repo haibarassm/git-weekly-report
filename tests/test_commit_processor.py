@@ -20,25 +20,35 @@ class TestCommitFilter(unittest.TestCase):
     def test_filter_merge_branch(self):
         """测试过滤 Merge branch"""
         message = "Merge branch 'feature' into main"
-        self.assertTrue(CommitFilter.should_filter(message))
+        should_filter, reason = CommitFilter.should_filter(message)
+        self.assertTrue(should_filter)
+        self.assertEqual(reason, "Merge branch")
 
     def test_filter_test_commits(self):
         """测试过滤包含 test 的 commit"""
         message = "fix: test login issue"
-        self.assertTrue(CommitFilter.should_filter(message))
+        should_filter, reason = CommitFilter.should_filter(message)
+        self.assertTrue(should_filter)
+        self.assertEqual(reason, "包含test")
 
     def test_filter_short_messages(self):
         """测试过滤短消息"""
-        self.assertTrue(CommitFilter.should_filter("abc"))
-        self.assertTrue(CommitFilter.should_filter("fix"))
-        self.assertTrue(CommitFilter.should_filter(""))
+        should_filter, reason = CommitFilter.should_filter("abc")
+        self.assertTrue(should_filter)
+        should_filter, reason = CommitFilter.should_filter("fix")
+        self.assertTrue(should_filter)
+        should_filter, reason = CommitFilter.should_filter("")
+        self.assertTrue(should_filter)
 
 
     def test_keep_valid_commits(self):
         """测试保留有效 commit"""
-        self.assertFalse(CommitFilter.should_filter("feat: 添加用户登录功能"))
-        self.assertFalse(CommitFilter.should_filter("修复登录问题"))
-        self.assertFalse(CommitFilter.should_filter("新加坡xxx改动合并德国"))
+        should_filter, reason = CommitFilter.should_filter("feat: 添加用户登录功能")
+        self.assertFalse(should_filter)
+        should_filter, reason = CommitFilter.should_filter("修复登录问题")
+        self.assertFalse(should_filter)
+        should_filter, reason = CommitFilter.should_filter("新加坡xxx改动合并德国")
+        self.assertFalse(should_filter)
 
     def test_filter_commits_list(self):
         """测试过滤 commit 列表"""
@@ -81,6 +91,20 @@ class TestCommitClassifier(unittest.TestCase):
         message = "新加坡xxx改动合并德国"
         result = CommitClassifier._parse_standard_format(message)
         self.assertIsNone(result)
+
+    def test_parse_standard_format_multiline(self):
+        """测试解析多行标准格式"""
+        message = """feat(perms): 新增商户角色时自动添加默认菜单权限
+
+- 新增 getDefaultMenuCodes() 方法
+- 新增 setDefaultMenusForRole() 方法
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"""
+        result = CommitClassifier._parse_standard_format(message)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0], "feat")
+        self.assertEqual(result[1], "perms")
+        self.assertIn("新增商户角色时自动添加默认菜单权限", result[2])
 
     def test_classify_feat_keywords(self):
         """测试 feat 关键词分类"""

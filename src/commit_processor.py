@@ -96,14 +96,17 @@ class CommitFilter:
 class CommitClassifier:
     """Commit 分类器 - V0.2"""
 
-    # 标准格式正则表达式
+    # 标准格式正则表达式（支持多行）
+    # 使用 [\s\S]+ 代替 .+ 以匹配包括换行符在内的所有字符
     CONVENTIONAL_COMMIT_PATTERN = re.compile(
-        r'^(\w+)\(([^)]+)\)\s*:\s*(.+)$'
+        r'^(\w+)\(([^)]+)\)\s*:\s*(.+)$',
+        re.DOTALL
     )
 
-    # 简化格式正则表达式 (只有 type)
+    # 简化格式正则表达式 (只有 type，支持多行)
     SIMPLE_TYPE_PATTERN = re.compile(
-        r'^(\w+)\s*:\s*(.+)$'
+        r'^(\w+)\s*:\s*(.+)$',
+        re.DOTALL
     )
 
     # feat 关键词（发布相关）
@@ -127,6 +130,9 @@ class CommitClassifier:
         Returns:
             (type, scope, cleaned_message) 或 None
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         # 尝试匹配 type(scope): message
         match = cls.CONVENTIONAL_COMMIT_PATTERN.match(message)
         if match:
@@ -139,6 +145,9 @@ class CommitClassifier:
             commit_type, cleaned_message = match.groups()
             return (commit_type, "default", cleaned_message)
 
+        # 调试：显示解析失败的原因
+        first_line = message.split('\n')[0][:50]
+        logger.debug(f"      解析失败: '{first_line}'")
         return None
 
     @classmethod
@@ -224,7 +233,7 @@ class CommitClassifier:
         if standard_format:
             commit_type, scope, cleaned_message = standard_format
             normalized_type = cls._normalize_type(commit_type)
-            logger.debug(f"  解析: [{commit_type}] -> [{normalized_type}]")
+            logger.info(f"    标准: [{commit_type}({scope})] -> [{normalized_type}/{scope}]")
             return ClassifiedCommit(
                 type=normalized_type,
                 scope=scope,
@@ -232,10 +241,14 @@ class CommitClassifier:
                 source_commit=source_commit
             )
 
-        # 无格式 commit - 使用关键词分类
+        # 标准格式解析失败，显示调试信息
+        first_line = message.split('\n')[0]
+        logger.info(f"    解析失败: '{first_line[:50]}...'")
+
+        # 使用关键词分类
         commit_type = cls._classify_by_keywords(message)
         scope = cls._extract_scope(message)
-        logger.debug(f"  关键词: [{commit_type}/{scope}]")
+        logger.info(f"    关键词: [{commit_type}/{scope}]")
 
         return ClassifiedCommit(
             type=commit_type,
