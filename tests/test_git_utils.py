@@ -52,11 +52,27 @@ class TestGitUtils(unittest.TestCase):
         """测试获取空仓库的分支"""
         repo_dir = Path(self.temp_dir) / "test_repo"
         repo_dir.mkdir()
-        Repo.init(repo_dir)
+        repo = Repo.init(repo_dir)
+
+        # 配置 Git 用户信息
+        with repo.config_writer() as config:
+            config.set_value("user", "name", "Test User")
+            config.set_value("user", "email", "test@example.com")
+
+        # 空仓库需要至少一个提交才有分支
+        # 创建一个测试提交
+        test_file = repo_dir / "test.txt"
+        test_file.write_text("test")
+        repo.index.add(["test.txt"])
+
+        repo.index.commit("Initial commit")
 
         branches = self.git_utils.get_branches(str(repo_dir))
         self.assertTrue(len(branches) > 0)
         self.assertTrue("main" in branches or "master" in branches)
+
+        # 显式关闭 repo 对象（Windows 需要）
+        repo.close()
 
     def test_format_commits_for_prompt_empty_list(self):
         """测试格式化空提交列表"""

@@ -78,7 +78,9 @@ class TestConfig(unittest.TestCase):
         config = Config(str(config_file))
         output_dir = config.get_output_dir()
 
-        self.assertEqual(str(output_dir), "/test/output")
+        # 跨平台测试：检查路径的组成部分，而不是完整字符串
+        self.assertEqual(output_dir.name, "output")
+        self.assertEqual(output_dir.parent.name, "test")
 
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
