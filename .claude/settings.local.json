@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker run:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker build:*)",
+      "Bash(docker cp:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker update:*)",
+      "Bash(bash start.sh)",
+      "Bash(python -m pytest tests/test_commit_processor.py -v)",
+      "Bash(python tests/test_commit_processor.py)",
+      "Bash(python tests/test_git_utils.py)",
+      "Bash(\".venv/Scripts/python.exe\" -m unittest discover tests -v)",
+      "Bash(\".venv/Scripts/python.exe\" -m unittest tests.test_config.TestConfig.test_get_output_dir tests.test_git_utils.TestGitUtils.test_get_branches_empty_repo -v)",
+      "Bash(MSYS_NO_PATHCONV=1 docker run -d --name report-generator -p 7861:7860 -v \"C:\\\\Users\\\\sherry\\\\project\\\\naps_report_generator\\\\config.json:/app/config.json\" -v \"C:\\\\Users\\\\sherry\\\\project\\\\naps_report_generator\\\\output:/app/output\" -v \"C:\\\\Users\\\\sherry\\\\project:/app/project:ro\" -e PROJECT_BASE_DIR=/app/project --add-host=host.docker.internal:host-gateway --restart unless-stopped naps-report-generator:v0.2)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec report-generator sh -c \"echo \\\\$PROJECT_BASE_DIR\")"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "mcp_mysql",
+    "test_mysql"
+  ]
+}
