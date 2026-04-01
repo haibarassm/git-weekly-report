@@ -10,11 +10,13 @@ try:
     from .git_utils import GitUtils
     from .report_generator import ReportGenerator
     from .config import config
+    from .commit_processor import process_commits
 except ImportError:
     # 直接运行时使用绝对导入
     from git_utils import GitUtils
     from report_generator import ReportGenerator
     from config import config
+    from commit_processor import process_commits
 
 
 class ReportApp:
@@ -183,10 +185,20 @@ class ReportApp:
             if not all_commits:
                 return f"该时间段内没有找到来自 {self.author} 的提交记录。", ""
 
-            all_commits.sort(key=lambda x: (x['project'], x['branch'], x['date']), reverse=True)
+            # V0.2: 对 commits 进行过滤和分类
+            processed_commits = process_commits(all_commits)
+
+            if not processed_commits:
+                return f"过滤后没有有效的提交记录。", ""
+
+            # 将项目/分支信息添加回处理后的 commits
+            # 需要重新关联原始 commit 的 project 和 branch
+            processed_commits = self._restore_project_branch_info(processed_commits, all_commits)
+
+            processed_commits.sort(key=lambda x: (x.get('project', ''), x.get('branch', ''), x.get('date', '')), reverse=True)
 
             # 格式化为文本
-            commits_text = self._format_commits_by_project_branch(all_commits)
+            commits_text = self._format_processed_commits(processed_commits)
 
             # 读取提示词
             system_prompt = self._read_prompt()
@@ -230,6 +242,54 @@ class ReportApp:
 
         return "\n".join(lines)
 
+    def _restore_project_branch_info(self, processed_commits: list, original_commits: list) -> list:
+        """
+        恢复处理后的 commit 的项目和分支信息
+        根据 source_commit (hash) 匹配原始 commit 的 project 和 branch
+        """
+        # 创建 hash -> (project, branch, date) 的映射
+        commit_info = {}
+        for commit in original_commits:
+            commit_info[commit['hash']] = {
+                'project': commit.get('project', ''),
+                'branch': commit.get('branch', ''),
+                'date': commit.get('date', '')
+            }
+
+        # 恢复信息
+        for commit in processed_commits:
+            source_hash = commit.get('source_commit', '')
+            if source_hash in commit_info:
+                commit['project'] = commit_info[source_hash]['project']
+                commit['branch'] = commit_info[source_hash]['branch']
+                commit['date'] = commit_info[source_hash]['date']
+
+        return processed_commits
+
+    def _format_processed_commits(self, commits: list) -> str:
+        """
+        格式化处理后的 commits（V0.2）
+        显示分类信息：type, scope, message
+        """
+        from collections import defaultdict
+
+        commits_by_project_branch = defaultdict(list)
+        for commit in commits:
+            key = f"{commit.get('project', '')}/{commit.get('branch', '')}"
+            commits_by_project_branch[key].append(commit)
+
+        lines = []
+        for key, branch_commits in commits_by_project_branch.items():
+            lines.append(f"共 {len(branch_commits)} 条提交\n")
+            for commit in branch_commits:
+                commit_type = commit.get('type', 'refactor')
+                scope = commit.get('scope', 'default')
+                message = commit.get('message', '')
+                # 格式: [type/scope] message
+                lines.append(f"[{commit_type}/{scope}] {message}")
+
+        return "\n".join(lines)
+
     def _read_prompt(self) -> str:
         """读取系统提示词"""
         prompt_path = Path(__file__).parent / "prompt" / "system_prompt.txt"
@@ -243,90 +303,90 @@ class ReportApp:
             return f.read()
 
     def _save_report(self, content: str, start_date: datetime, end_date: datetime) -> str:
-        """保存报告到文件"""
+        """保存报告到文件（只保存纯周报内容）"""
         output_dir = Path(config.get_output_dir())
         output_dir.mkdir(parents=True, exist_ok=True)
 
         date_str = start_date.strftime("%Y%m%d")
-        filename = f"周报_{date_str}.md"
+        filename = f"周报_{date_str}.txt"
         filepath = output_dir / filename
 
-        metadata = f"""# 周报
-
-**作者**: {self.author}
-**时间范围**: {start_date.strftime("%Y-%m-%d")} ~ {end_date.strftime("%Y-%m-%d")}
-**生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-
----
-
-{content}
-"""
-
+        # 直接保存LLM生成的内容，不添加任何元数据
         with open(filepath, "w", encoding="utf-8") as f:
-            f.write(metadata)
+            f.write(content)
 
         return str(filepath)
 
     def create_ui(self):
         """创建Gradio界面"""
-        with gr.Blocks(title="Git周报生成器") as app:
+        with gr.Blocks(title="Git周报生成器",theme=gr.themes.Base()) as app:
             gr.Markdown("# Git周报生成器")
             gr.Markdown(f"**当前用户**: {self.author}")
             gr.Markdown(f"**项目目录**: `{self.base_dir}`")
 
             with gr.Row():
+                # 左列：项目选择
                 with gr.Column(scale=1):
-                    # 项目选择区
-                    gr.Markdown("### 1. 选择项目")
+                    gr.Markdown("### 选择项目")
                     current_project = gr.Dropdown(
                         label="当前项目",
                         choices=self.get_projects(),
                         interactive=True,
                     )
 
-                    # 分支选择区
-                    gr.Markdown("### 2. 选择分支")
+                    gr.Markdown("### 选择分支")
                     current_branches = gr.CheckboxGroup(
                         label="当前项目的分支（可多选）",
                         choices=[],
                         interactive=True,
                     )
 
-                    # 添加按钮
-                    add_btn = gr.Button("➕ 添加到已选列表", variant="primary", size="sm")
+                    add_btn = gr.Button("➕ 添加到列表", variant="primary", size="sm")
 
                     gr.Markdown("---")
 
-                    # 已选择列表
-                    gr.Markdown("### 3. 已选择的项目/分支")
+                    gr.Markdown("### 已选择")
                     selected_branches = gr.CheckboxGroup(
                         label="已选择（可取消勾选移除）",
                         choices=[],
                         interactive=True,
                     )
+                    selected_count = gr.Markdown("**已选择**: 0 个项目/分支")
 
-                    # 时间选择
-                    gr.Markdown("### 4. 设置时间范围")
+                    gr.Markdown("---")
+                    gr.Markdown("""
+                    **使用说明**
+                    1. 选择项目
+                    2. 勾选分支（可多选）
+                    3. 点击添加
+                    4. 设置天数
+                    5. 生成周报
+                    """)
+
+                # 中列：时间设置和生成
+                with gr.Column(scale=1):
+                    gr.Markdown("### 时间范围")
                     days = gr.Slider(
-                        label="时间范围（天）",
+                        label="天数",
                         minimum=1,
                         maximum=30,
                         value=7,
                         step=1,
                     )
 
-                    # 操作按钮
-                    with gr.Row():
-                        refresh_btn = gr.Button("🔄 刷新项目", size="sm")
-                        clear_btn = gr.Button("🗑️ 清空全部", size="sm")
+                    gr.Markdown("---")
+
+                    gr.Markdown("### 操作")
+                    refresh_btn = gr.Button("🔄 刷新项目", size="sm")
+                    clear_btn = gr.Button("🗑️ 清空全部", size="sm")
+
+                    gr.Markdown("---")
 
                     generate_btn = gr.Button("📊 生成周报", variant="primary", size="lg")
 
-                    # 已选数量显示
-                    selected_count = gr.Markdown("**已选择**: 0 个项目/分支")
-
+                # 右列：输出结果
                 with gr.Column(scale=2):
-                    output = gr.Markdown(label="周报内容")
+                    output = gr.Textbox(label="周报内容", lines=10)
                     download_file = gr.File(label="下载周报", visible=True)
 
             # 隐藏状态
@@ -403,26 +463,6 @@ class ReportApp:
                 inputs=[selected_state, days],
                 outputs=[output, download_file],
             )
-
-            # 使用说明
-            gr.Markdown("""
-            ## 使用说明
-
-            1. **选择项目** - 从下拉列表选择一个项目
-            2. **选择分支** - 勾选该项目需要包含的分支（可多选）
-            3. **添加到列表** - 点击"➕ 添加到已选列表"按钮
-            4. **重复以上步骤** - 可以继续添加其他项目的分支
-            5. **查看已选** - 在"已选择"区域查看所有已选项目/分支
-            6. **移除项目** - 在"已选择"中取消勾选即可移除
-            7. **设置时间** - 调整时间范围
-            8. **生成周报** - 点击"📊 生成周报"按钮
-
-            ## 注意事项
-
-            - 项目目录固定为 `C:\\Users\\sherry\\project`
-            - 支持多项目多分支汇总生成周报
-            - 仅包含当前用户的提交记录
-            """)
 
         return app
 
