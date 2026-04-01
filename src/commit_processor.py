@@ -1,5 +1,11 @@
-"""Commit 处理模块 - V0.2 过滤与分类"""
+"""Commit 处理模块
+
+版本迭代:
+- V0.2: 过滤 + 分类
+- V0.3: V0.2 + 拆分
+"""
 import re
+import json
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -17,63 +23,39 @@ class ClassifiedCommit:
     """分类后的 Commit 数据结构"""
     type: str
     scope: str
-    message: str
+    tasks: List[str]  # V0.3: 拆分后的任务列表 (V0.2 时为单元素列表)
     source_commit: str
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> Dict:
         """转换为字典"""
         return asdict(self)
 
 
-class CommitFilter:
+# =============================================================================
+# V0.2: 过滤与分类
+# =============================================================================
+
+class CommitFilterV02:
     """Commit 过滤器 - V0.2"""
 
-    # 过滤关键词
-    FILTER_PATTERNS = [
-        "Merge branch",
-        "test",
-    ]
-
-    # 最小消息长度
+    FILTER_PATTERNS = ["Merge branch", "test"]
     MIN_MESSAGE_LENGTH = 5
 
     @classmethod
     def should_filter(cls, commit_message: str) -> tuple[bool, str]:
-        """
-        判断 commit 是否应该被过滤
-
-        Args:
-            commit_message: commit 消息
-
-        Returns:
-            (是否过滤, 过滤原因)
-        """
-        # 规则1: 包含 "Merge branch"
+        """判断 commit 是否应该被过滤"""
         if "Merge branch" in commit_message:
             return True, "Merge branch"
-
-        # 规则2: 包含 "test"
         if "test" in commit_message:
             return True, "包含test"
-
-        # 规则3: message 长度 < 5
         stripped = commit_message.strip()
         if len(stripped) < cls.MIN_MESSAGE_LENGTH:
-            return True, f"长度<5 (实际{len(stripped)}字符)"
-
+            return True, f"长度<5"
         return False, ""
 
     @classmethod
-    def filter_commits(cls, commits: List[Dict]) -> List[Dict]:
-        """
-        过滤 commit 列表
-
-        Args:
-            commits: commit 列表
-
-        Returns:
-            过滤后的 commit 列表
-        """
+    def filter_commits(cls, commits: List[Dict]) -> tuple[List[Dict], Dict[str, int]]:
+        """过滤 commit 列表，返回 (过滤后的列表, 过滤统计)"""
         import logging
         logger = logging.getLogger(__name__)
 
@@ -84,125 +66,47 @@ class CommitFilter:
             should_filt, reason = cls.should_filter(commit['message'])
             if should_filt:
                 filter_stats[reason] = filter_stats.get(reason, 0) + 1
-                commit_hash = commit.get('hash', '')[:7]
-                logger.info(f"  [过滤] {commit_hash} | {reason} | {commit['message'][:60]}")
+                logger.debug(f"  [过滤] {commit.get('hash', '')[:7]} | {reason}")
             else:
                 filtered.append(commit)
 
-        logger.info(f"过滤统计: {filter_stats}")
-        return filtered
+        return filtered, filter_stats
 
 
-class CommitClassifier:
+class CommitClassifierV02:
     """Commit 分类器 - V0.2"""
 
-    # 标准格式正则表达式（支持多行）
-    # 使用 [\s\S]+ 代替 .+ 以匹配包括换行符在内的所有字符
-    CONVENTIONAL_COMMIT_PATTERN = re.compile(
-        r'^(\w+)\(([^)]+)\)\s*:\s*(.+)$',
-        re.DOTALL
-    )
+    CONVENTIONAL_COMMIT_PATTERN = re.compile(r'^(\w+)\(([^)]+)\)\s*:\s*(.+)$', re.DOTALL)
+    SIMPLE_TYPE_PATTERN = re.compile(r'^(\w+)\s*:\s*(.+)$', re.DOTALL)
 
-    # 简化格式正则表达式 (只有 type，支持多行)
-    SIMPLE_TYPE_PATTERN = re.compile(
-        r'^(\w+)\s*:\s*(.+)$',
-        re.DOTALL
-    )
-
-    # feat 关键词（发布相关）
-    FEAT_KEYWORDS = [
-        "发布", "上线", "新加坡", "德国", "巴西"
-    ]
-
-    # fix 关键词（修复相关）
-    FIX_KEYWORDS = [
-        "修复", "bug", "问题"
-    ]
+    FEAT_KEYWORDS = ["发布", "上线", "新加坡", "德国", "巴西"]
+    FIX_KEYWORDS = ["修复", "bug", "问题"]
 
     @classmethod
     def _parse_standard_format(cls, message: str) -> Optional[Tuple[str, str, str]]:
-        """
-        解析标准格式 commit
-
-        Args:
-            message: commit 消息
-
-        Returns:
-            (type, scope, cleaned_message) 或 None
-        """
-        import logging
-        logger = logging.getLogger(__name__)
-
-        # 尝试匹配 type(scope): message
+        """解析标准格式 commit，返回 (type, scope, message) 或 None"""
         match = cls.CONVENTIONAL_COMMIT_PATTERN.match(message)
         if match:
-            commit_type, scope, cleaned_message = match.groups()
-            return (commit_type, scope, cleaned_message)
-
-        # 尝试匹配 type: message
+            return match.groups()
         match = cls.SIMPLE_TYPE_PATTERN.match(message)
         if match:
-            commit_type, cleaned_message = match.groups()
-            return (commit_type, "default", cleaned_message)
-
-        # 调试：显示解析失败的原因
-        first_line = message.split('\n')[0][:50]
-        logger.debug(f"      解析失败: '{first_line}'")
+            return (match.group(1), "default", match.group(2))
         return None
 
     @classmethod
     def _classify_by_keywords(cls, message: str) -> str:
-        """
-        根据关键词对无格式 commit 进行分类
-
-        Args:
-            message: commit 消息
-
-        Returns:
-            Commit 类型
-        """
-        # 检查 feat 关键词
+        """根据关键词分类"""
         for keyword in cls.FEAT_KEYWORDS:
             if keyword in message:
                 return CommitType.FEAT.value
-
-        # 检查 fix 关键词
         for keyword in cls.FIX_KEYWORDS:
             if keyword in message:
                 return CommitType.FIX.value
-
-        # 默认为 refactor
         return CommitType.REFACTOR.value
 
     @classmethod
-    def _extract_scope(cls, message: str) -> str:
-        """
-        提取 scope
-
-        Args:
-            message: commit 消息
-
-        Returns:
-            scope 字符串
-        """
-        # 尝试匹配括号内容
-        match = re.search(r'\(([^)]+)\)', message)
-        if match:
-            return match.group(1)
-
-        return "default"
-
-    @classmethod
     def _normalize_type(cls, commit_type: str) -> str:
-        """
-        标准化 type
-
-        Args:
-            commit_type: 原始 type
-
-        Returns:
-            标准化后的 type
-        """
+        """标准化 type"""
         type_mapping = {
             "feat": CommitType.FEAT.value,
             "feature": CommitType.FEAT.value,
@@ -213,93 +117,273 @@ class CommitClassifier:
 
     @classmethod
     def classify(cls, commit: Dict) -> ClassifiedCommit:
-        """
-        对单个 commit 进行分类
-
-        Args:
-            commit: commit 数据字典
-
-        Returns:
-            ClassifiedCommit 对象
-        """
-        import logging
-        logger = logging.getLogger(__name__)
-
+        """对单个 commit 进行分类，返回 ClassifiedCommit"""
         message = commit['message']
         source_commit = commit.get('hash', '')
 
-        # 首先尝试解析标准格式
+        # 尝试解析标准格式
         standard_format = cls._parse_standard_format(message)
         if standard_format:
             commit_type, scope, cleaned_message = standard_format
             normalized_type = cls._normalize_type(commit_type)
-            logger.info(f"    标准: [{commit_type}({scope})] -> [{normalized_type}/{scope}]")
             return ClassifiedCommit(
                 type=normalized_type,
                 scope=scope,
-                message=cleaned_message,
+                tasks=[cleaned_message],
                 source_commit=source_commit
             )
 
-        # 标准格式解析失败，显示调试信息
-        first_line = message.split('\n')[0]
-        logger.info(f"    解析失败: '{first_line[:50]}...'")
-
-        # 使用关键词分类
+        # 关键词分类
         commit_type = cls._classify_by_keywords(message)
-        scope = cls._extract_scope(message)
-        logger.info(f"    关键词: [{commit_type}/{scope}]")
-
         return ClassifiedCommit(
             type=commit_type,
-            scope=scope,
-            message=message,
+            scope="default",
+            tasks=[message],
             source_commit=source_commit
         )
 
     @classmethod
     def classify_commits(cls, commits: List[Dict]) -> List[Dict]:
-        """
-        对 commit 列表进行分类
-
-        Args:
-            commits: commit 列表
-
-        Returns:
-            分类后的 commit 列表（字典格式）
-        """
+        """对 commit 列表进行分类"""
         import logging
         logger = logging.getLogger(__name__)
 
-        classified = []
+        results = []
         for commit in commits:
             result = cls.classify(commit)
-            classified.append(result.to_dict())
-            # 记录分类结果
-            commit_hash = commit.get('hash', '')[:7]
-            logger.info(f"  [{result.type}/{result.scope}] {commit_hash} | {result.message[:60]}")
+            results.append({
+                'type': result.type,
+                'scope': result.scope,
+                'message': result.tasks[0],  # 保留 message 供 V0.3 拆分使用
+                'source_commit': result.source_commit
+            })
+            logger.debug(f"  [{result.type}/{result.scope}] {result.source_commit[:7]}")
 
-        return classified
+        return results
 
 
-def process_commits(commits: List[Dict]) -> List[Dict]:
+# =============================================================================
+# V0.3: 拆分
+# =============================================================================
+
+class CommitSplitterV03:
+    """Commit 拆分器 - V0.3
+
+    拆分优先级:
+    1. Markdown 格式 (## 标题 + 1. 2. 编号)
+    2. - 列表格式
+    3. 普通文本分隔符 (， , and + 以及)
+    4. LLM 兜底拆分
     """
-    完整处理流程：过滤 -> 分类
+
+    TEXT_SEPARATORS = ['，', ',', ' and ', '+', '以及']
+    LLM_SPLIT_MIN_LENGTH = 15
+    LLM_MAX_TASKS = 5
+
+    @classmethod
+    def _split_markdown(cls, message: str) -> Optional[List[str]]:
+        """拆分 Markdown 格式"""
+        if "##" not in message:
+            return None
+
+        tasks = []
+        blocks = message.split("##")
+
+        for block in blocks:
+            block = block.strip()
+            if not block:
+                continue
+            numbered_items = re.split(r'\n\s*\d+[.、]\s*', block)
+            for item in numbered_items:
+                item = item.strip()
+                if item and len(item) > 2:
+                    tasks.append(item)
+
+        return tasks if tasks else None
+
+    @classmethod
+    def _split_dash_list(cls, message: str) -> Optional[List[str]]:
+        """拆分 - 列表格式"""
+        lines = message.strip().split('\n')
+        tasks = []
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith('- '):
+                task = line[2:].strip()
+                if task:
+                    tasks.append(task)
+            elif line.startswith('-'):
+                task = line[1:].strip()
+                if task:
+                    tasks.append(task)
+
+        return tasks if tasks else None
+
+    @classmethod
+    def _split_by_separators(cls, message: str) -> List[str]:
+        """按分隔符拆分普通文本"""
+        import re
+        tasks = []
+        lines = message.split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            sep_pattern = '|'.join(re.escape(sep) for sep in cls.TEXT_SEPARATORS)
+            parts = re.split(sep_pattern, line)
+            for part in parts:
+                part = part.strip()
+                if part and len(part) > 2:
+                    tasks.append(part)
+
+        return tasks if tasks else [message.strip()]
+
+    @classmethod
+    def _count_sentences(cls, text: str) -> int:
+        """统计句子数量"""
+        sentences = re.split(r'[。.！!?？]', text)
+        return len([s for s in sentences if s.strip()])
+
+    @classmethod
+    def split_by_llm(cls, message: str, llm_client=None) -> List[str]:
+        """使用 LLM 拆分 commit"""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        if llm_client is None:
+            return [message.strip()]
+
+        prompt = f"""请将以下 commit 消息拆分为多个独立的任务（最多 {cls.LLM_MAX_TASKS} 个）。
+
+要求：
+1. 每个任务应该是独立可理解的功能点
+2. 保持原意不变
+3. 只返回任务列表，每行一个任务
+4. 如果无法拆分，直接返回原文
+
+Commit 消息：
+{message}
+
+任务列表："""
+
+        try:
+            response = llm_client.generate(prompt)
+            tasks = [line.strip() for line in response.split('\n') if line.strip()]
+            if len(tasks) > cls.LLM_MAX_TASKS:
+                tasks = tasks[:cls.LLM_MAX_TASKS]
+            if tasks:
+                return tasks
+            return [message.strip()]
+        except Exception as e:
+            logging.getLogger(__name__).warning(f"LLM 拆分失败: {e}")
+            return [message.strip()]
+
+    @classmethod
+    def split(cls, classified_commit: Dict, llm_client=None) -> List[str]:
+        """对分类后的 commit 进行拆分"""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        message = classified_commit.get('message', '')
+        if not message:
+            return []
+
+        # 规则1: Markdown 格式
+        markdown_tasks = cls._split_markdown(message)
+        if markdown_tasks and len(markdown_tasks) > 1:
+            return markdown_tasks
+
+        # 规则2: - 列表
+        dash_tasks = cls._split_dash_list(message)
+        if dash_tasks and len(dash_tasks) > 1:
+            return dash_tasks
+
+        # 规则3: 分隔符
+        separator_tasks = cls._split_by_separators(message)
+        if len(separator_tasks) > 1:
+            return separator_tasks
+
+        # 规则4: LLM 兜底
+        sentence_count = cls._count_sentences(message)
+        message_length = len(message.strip())
+        if sentence_count <= 1 and message_length > cls.LLM_SPLIT_MIN_LENGTH:
+            return cls.split_by_llm(message, llm_client)
+
+        return [message.strip()]
+
+    @classmethod
+    def split_commits(cls, classified_commits: List[Dict], llm_client=None) -> List[Dict]:
+        """对分类后的 commit 列表进行拆分"""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        results = []
+        for commit in classified_commits:
+            tasks = cls.split(commit, llm_client)
+            results.append({
+                'type': commit.get('type', 'refactor'),
+                'scope': commit.get('scope', 'default'),
+                'tasks': tasks,
+                'source_commit': commit.get('source_commit', '')
+            })
+
+        return results
+
+
+# =============================================================================
+# 完整处理流程
+# =============================================================================
+
+def process_commits(commits: List[Dict], llm_client=None) -> List[Dict]:
+    """
+    完整处理流程：过滤 -> 分类 -> 拆分
 
     Args:
         commits: 原始 commit 列表
+        llm_client: LLM 客户端（可选，用于 V0.3 拆分）
 
     Returns:
-        处理后的 commit 列表
+        处理后的 commit 列表，结构:
+        [
+            {
+                "type": "fix",
+                "scope": "perms",
+                "tasks": ["修复菜单权限问题", "优化权限逻辑"],
+                "source_commit": "abc123"
+            },
+            ...
+        ]
     """
     import logging
     logger = logging.getLogger(__name__)
 
-    # 步骤1: 过滤
-    filtered = CommitFilter.filter_commits(commits)
+    logger.info("=" * 50)
+    logger.info(f"Commit 处理开始: {len(commits)} 条原始 commit")
+    logger.info("=" * 50)
 
-    # 步骤2: 分类
-    logger.info(">>> 步骤2: 分类 commit")
-    classified = CommitClassifier.classify_commits(filtered)
+    # V0.2: 步骤1 - 过滤
+    filtered, filter_stats = CommitFilterV02.filter_commits(commits)
+    logger.info(f"[V0.2 过滤] 保留 {len(filtered)} 条，过滤 {len(commits) - len(filtered)} 条")
 
-    return classified
+    # V0.2: 步骤2 - 分类
+    classified = CommitClassifierV02.classify_commits(filtered)
+    type_count = {}
+    for c in classified:
+        t = c.get('type', 'unknown')
+        type_count[t] = type_count.get(t, 0) + 1
+    logger.info(f"[V0.2 分类] {type_count}")
+
+    # V0.3: 步骤3 - 拆分
+    split = CommitSplitterV03.split_commits(classified, llm_client)
+    total_tasks = sum(len(c['tasks']) for c in split)
+    logger.info(f"[V0.3 拆分] {len(split)} 个 commit -> {total_tasks} 个任务")
+
+    # 输出最终 JSON 结构
+    logger.info("=" * 50)
+    logger.info(">>> 最终 JSON 结构 (传给 LLM):")
+    logger.info(json.dumps(split, ensure_ascii=False, indent=2))
+    logger.info("=" * 50)
+
+    return split

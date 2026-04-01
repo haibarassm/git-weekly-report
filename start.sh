@@ -7,7 +7,7 @@ echo ""
 
 # 获取 Git 分支名称
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-VERSION=${1:-"v0.2"}
+VERSION=${1:-"v0.3"}
 
 # 使用分支名和版本作为标签
 IMAGE_NAME="naps-report-generator:${BRANCH_NAME}-${VERSION}"

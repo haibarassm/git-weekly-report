@@ -187,26 +187,9 @@ class ReportApp:
 
             import logging
             logger = logging.getLogger(__name__)
-            logger.info("=" * 60)
-            logger.info("V0.2: Commit 处理开始")
-            logger.info(f"收集到 {len(all_commits)} 条原始 commit")
-            logger.info("=" * 60)
 
-            # V0.2: 对 commits 进行过滤和分类
-            logger.info(">>> 步骤1: 过滤 commit")
+            # V0.3: 对 commits 进行过滤、分类和拆分
             processed_commits = process_commits(all_commits)
-
-            filtered_count = len(all_commits) - len(processed_commits)
-            logger.info("=" * 60)
-            logger.info(f">>> 过滤完成: 保留 {len(processed_commits)} 条，过滤掉 {filtered_count} 条")
-
-            # 显示分类结果
-            type_count = {}
-            for commit in processed_commits:
-                t = commit.get('type', 'unknown')
-                type_count[t] = type_count.get(t, 0) + 1
-            logger.info(f">>> 分类统计: {type_count}")
-            logger.info("=" * 60)
 
             if not processed_commits:
                 return f"过滤后没有有效的提交记录。", ""
@@ -288,8 +271,8 @@ class ReportApp:
 
     def _format_processed_commits(self, commits: list) -> str:
         """
-        格式化处理后的 commits（V0.2）
-        显示分类信息：type, scope, message
+        格式化处理后的 commits（V0.3）
+        显示分类信息和拆分后的任务：type, scope, tasks
         """
         from collections import defaultdict
 
@@ -304,9 +287,10 @@ class ReportApp:
             for commit in branch_commits:
                 commit_type = commit.get('type', 'refactor')
                 scope = commit.get('scope', 'default')
-                message = commit.get('message', '')
-                # 格式: [type/scope] message
-                lines.append(f"[{commit_type}/{scope}] {message}")
+                tasks = commit.get('tasks', [])
+                # 格式: [type/scope] 任务1; 任务2; ...
+                tasks_text = '; '.join(tasks)
+                lines.append(f"[{commit_type}/{scope}] {tasks_text}")
 
         return "\n".join(lines)
 
