@@ -20,7 +20,8 @@
       "Bash(MSYS_NO_PATHCONV=1 docker exec report-generator sh -c \"echo \\\\$PROJECT_BASE_DIR\")",
       "Bash(MSYS_NO_PATHCONV=1 docker stop report-generator)",
       "Bash(MSYS_NO_PATHCONV=1 docker rm report-generator)",
-      "Bash(MSYS_NO_PATHCONV=1 docker run -d --name report-generator -p 7861:7860 -v \"C:\\\\Users\\\\sherry\\\\project\\\\naps_report_generator\\\\config.json:/app/config.json\" -v \"C:\\\\Users\\\\sherry\\\\project\\\\naps_report_generator\\\\output:/app/output\" -v \"C:\\\\Users\\\\sherry\\\\project:/app/project:ro\" -e PROJECT_BASE_DIR=/app/project --add-host=host.docker.internal:host-gateway --restart unless-stopped naps-report-generator:main-v0.2)"
+      "Bash(MSYS_NO_PATHCONV=1 docker run -d --name report-generator -p 7861:7860 -v \"C:\\\\Users\\\\sherry\\\\project\\\\naps_report_generator\\\\config.json:/app/config.json\" -v \"C:\\\\Users\\\\sherry\\\\project\\\\naps_report_generator\\\\output:/app/output\" -v \"C:\\\\Users\\\\sherry\\\\project:/app/project:ro\" -e PROJECT_BASE_DIR=/app/project --add-host=host.docker.internal:host-gateway --restart unless-stopped naps-report-generator:main-v0.2)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec report-generator grep -B 5 -A 10 \"type_mapping = {\" /app/src/commit_processor.py)"
     ]
   },
   "enableAllProjectMcpServers": true,
