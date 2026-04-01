@@ -185,8 +185,23 @@ class ReportApp:
             if not all_commits:
                 return f"该时间段内没有找到来自 {self.author} 的提交记录。", ""
 
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"V0.2: 收集到 {len(all_commits)} 条原始 commit")
+
             # V0.2: 对 commits 进行过滤和分类
             processed_commits = process_commits(all_commits)
+
+            filtered_count = len(all_commits) - len(processed_commits)
+            logger.info(f"V0.2: 过滤掉 {filtered_count} 条 commit (Merge branch/test/短消息)")
+            logger.info(f"V0.2: 保留 {len(processed_commits)} 条有效 commit")
+
+            # 显示分类结果
+            type_count = {}
+            for commit in processed_commits:
+                t = commit.get('type', 'unknown')
+                type_count[t] = type_count.get(t, 0) + 1
+            logger.info(f"V0.2: 分类结果 - {type_count}")
 
             if not processed_commits:
                 return f"过滤后没有有效的提交记录。", ""

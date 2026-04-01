@@ -72,3 +72,69 @@
 2026-03-09 13:41:26,341 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
 2026-03-09 13:41:26,341 - src.llm_client - INFO - 使用模型: llama3.1:8b
 2026-03-09 13:41:56,427 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 10:56:05,555 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 10:56:05,555 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 10:56:05,555 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 10:56:05,555 - src.llm_client - ERROR - Ollama API请求失败: 连接失败
+2026-04-01 10:56:05,556 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 10:56:05,556 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 10:56:05,556 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 10:56:05,557 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 10:56:05,557 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 10:56:05,557 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 10:56:05,557 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 10:56:05,557 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 11:02:21,124 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 11:02:21,124 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 11:02:21,124 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 11:02:21,124 - src.llm_client - ERROR - Ollama API请求失败: 连接失败
+2026-04-01 11:02:21,125 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 11:02:21,125 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 11:02:21,125 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 11:02:21,125 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 11:02:21,125 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 11:02:21,125 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 11:02:21,125 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 11:02:21,126 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 11:04:33,501 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,502 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,503 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,503 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,504 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,505 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,618 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,618 - src.app - INFO - 开始扫描项目目录: C:\Users\sherry\AppData\Local\Temp\tmp3d579kln
+2026-04-01 11:04:33,618 - src.app - INFO - 扫描完成，找到 0 个项目
+2026-04-01 11:04:33,842 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:33,842 - src.app - INFO - 开始扫描项目目录: C:\Users\sherry\AppData\Local\Temp\tmpfwpel2w0
+2026-04-01 11:04:33,842 - src.app - INFO - 找到项目: project1
+2026-04-01 11:04:33,843 - src.app - INFO - 找到项目: project2
+2026-04-01 11:04:33,843 - src.app - INFO - 扫描完成，找到 2 个项目
+2026-04-01 11:04:33,850 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,413 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,414 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,415 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,415 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,417 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,417 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,536 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,537 - src.app - INFO - 开始扫描项目目录: C:\Users\sherry\AppData\Local\Temp\tmpf_n9abt4
+2026-04-01 11:04:40,537 - src.app - INFO - 扫描完成，找到 0 个项目
+2026-04-01 11:04:40,758 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,758 - src.app - INFO - 开始扫描项目目录: C:\Users\sherry\AppData\Local\Temp\tmpimvbju5a
+2026-04-01 11:04:40,758 - src.app - INFO - 找到项目: project1
+2026-04-01 11:04:40,758 - src.app - INFO - 找到项目: project2
+2026-04-01 11:04:40,758 - src.app - INFO - 扫描完成，找到 2 个项目
+2026-04-01 11:04:40,765 - src.llm_client - INFO - 初始化Ollama客户端: http://host.docker.internal:11434, 模型: llama3.1:8b
+2026-04-01 11:04:40,927 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 11:04:40,927 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 11:04:40,927 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 11:04:40,927 - src.llm_client - ERROR - Ollama API请求失败: 连接失败
+2026-04-01 11:04:40,927 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 11:04:40,928 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 11:04:40,928 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 11:04:40,928 - src.llm_client - INFO - Ollama请求成功
+2026-04-01 11:04:40,928 - src.llm_client - INFO - 初始化Ollama客户端: http://localhost:11434, 模型: qwen2.5:14b
+2026-04-01 11:04:40,928 - src.llm_client - INFO - 发送请求到Ollama: http://localhost:11434/v1/chat/completions
+2026-04-01 11:04:40,928 - src.llm_client - INFO - 使用模型: qwen2.5:14b
+2026-04-01 11:04:40,928 - src.llm_client - INFO - Ollama请求成功

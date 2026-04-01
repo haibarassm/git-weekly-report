@@ -73,10 +73,17 @@ class CommitFilter:
         Returns:
             过滤后的 commit 列表
         """
-        return [
-            commit for commit in commits
-            if not cls.should_filter(commit['message'])
-        ]
+        import logging
+        logger = logging.getLogger(__name__)
+
+        filtered = []
+        for commit in commits:
+            if cls.should_filter(commit['message']):
+                logger.debug(f"过滤: {commit['message'][:50]}...")
+            else:
+                filtered.append(commit)
+
+        return filtered
 
 
 class CommitClassifier:
@@ -199,6 +206,9 @@ class CommitClassifier:
         Returns:
             ClassifiedCommit 对象
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         message = commit['message']
         source_commit = commit.get('hash', '')
 
@@ -207,6 +217,7 @@ class CommitClassifier:
         if standard_format:
             commit_type, scope, cleaned_message = standard_format
             normalized_type = cls._normalize_type(commit_type)
+            logger.debug(f"标准格式: [{commit_type}({scope})] {cleaned_message[:40]}...")
             return ClassifiedCommit(
                 type=normalized_type,
                 scope=scope,
@@ -217,6 +228,7 @@ class CommitClassifier:
         # 无格式 commit - 使用关键词分类
         commit_type = cls._classify_by_keywords(message)
         scope = cls._extract_scope(message)
+        logger.debug(f"关键词分类: [{commit_type}/{scope}] {message[:40]}...")
 
         return ClassifiedCommit(
             type=commit_type,
