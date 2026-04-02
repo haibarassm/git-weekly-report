@@ -1,9 +1,10 @@
 # CHANGELOG
 
-## [v0.2] - 2026-04-01
+## [v0.3] - 2026-04-02
 
 ### ✨ 新功能
 
+- feat: V0.3 添加 Commit 拆分功能
 - feat: 增强日志输出，显示每条commit的处理详情
 - feat: 添加 V0.2 处理过程日志输出
 - feat: 实现V0.2版本 - Commit过滤与分类
@@ -18,6 +19,7 @@
 
 ### 📝 文档
 
+- docs: 添加 CHANGELOG for V0.2
 - docs: 更新 README 添加 V0.2 功能说明
 
 ### ✅ 测试
