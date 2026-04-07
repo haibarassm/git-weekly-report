@@ -7,7 +7,7 @@ echo ""
 
 # 获取 Git 分支名称
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-VERSION=${1:-"v0.3"}
+VERSION=${1:-"v0.4"}
 
 # 使用分支名和版本作为标签
 IMAGE_NAME="naps-report-generator:${BRANCH_NAME}-${VERSION}"
@@ -51,8 +51,7 @@ fi
 
 echo ""
 echo "构建Docker镜像..."
-docker build -t ${IMAGE_NAME} .
-docker tag ${IMAGE_NAME} ${LATEST_IMAGE_NAME}
+docker build -t ${IMAGE_NAME} -t ${LATEST_IMAGE_NAME} .
 
 echo ""
 echo "启动Docker容器..."

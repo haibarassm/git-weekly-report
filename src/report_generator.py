@@ -8,11 +8,13 @@ try:
     from .config import config
     from .git_utils import GitUtils
     from .llm_client import create_llm_client
+    from .commit_processor import process_commits
 
 except ImportError:
     from config import config
     from git_utils import GitUtils
     from llm_client import create_llm_client
+    from commit_processor import process_commits
 
 
 class ReportGenerator:
@@ -83,8 +85,12 @@ class ReportGenerator:
                 branch_commits = sorted(commits_by_branch[branch], key=lambda x: x['date'], reverse=True)
                 ordered_commits.extend(branch_commits)
 
-        # 格式化提交记录（按分支分组）
-        commits_text = self._format_commits_by_branch(ordered_commits)
+        # 使用 V0.4 处理流程：过滤 -> 分类 -> 拆分 -> 聚合
+        processed_commits = process_commits(ordered_commits, llm_client=self.llm_client, enable_v04=True)
+
+        # 格式化处理后的提交记录为 JSON
+        import json
+        commits_text = json.dumps(processed_commits, ensure_ascii=False, indent=2)
 
         # 读取提示词
         system_prompt = self._read_prompt(self.system_prompt_path)
@@ -114,24 +120,9 @@ class ReportGenerator:
             return f.read()
 
     def _format_commits_by_branch(self, commits: list) -> str:
-        """按分支分组格式化提交记录"""
-        from collections import defaultdict
-
-        # 按分支分组
-        commits_by_branch = defaultdict(list)
-        for commit in commits:
-            branch = commit.get('branch', 'unknown')
-            commits_by_branch[branch].append(commit)
-
-        # 格式化输出
-        lines = []
-        for branch, branch_commits in commits_by_branch.items():
-            lines.append(f"\n## 分支: {branch}")
-            lines.append(f"共 {len(branch_commits)} 条提交\n")
-            for commit in branch_commits:
-                lines.append(f"[{commit['date']}] {commit['message']}\n")
-
-        return "\n".join(lines)
+        """按分支分组格式化提交记录（已废弃，使用 JSON 输出）"""
+        import json
+        return json.dumps(commits, ensure_ascii=False, indent=2)
 
     def _save_report(self, content: str, repo_path: str, branch: str, start_date: datetime, end_date: datetime) -> Path:
         """保存报告到文件"""

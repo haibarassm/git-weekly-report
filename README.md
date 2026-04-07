@@ -4,12 +4,22 @@
 
 ## 功能特性
 
+### V0.4 新增
+- 🔗 **Task 聚合**：将细粒度任务聚合为高层抽象
+- 📋 **关键词匹配**：智能识别相似任务并合并
+- 🤖 **LLM 摘要**：自动生成任务组的高层描述
+- 📊 **增强输出**：包含 summary、source_commits、task_count
+
+### V0.3 新增
+- ✂️ **Commit 拆分**：支持 Markdown、列表、分隔符拆分
+- 🧩 **LLM 兜底**：无法拆分时使用 LLM 智能拆分
+
 ### V0.2 新增
 - 🔍 **智能过滤**：自动过滤 Merge branch、test commit、短消息
 - 🏷️ **自动分类**：支持标准格式（Conventional Commits）和关键词分类
 - 📝 **详细日志**：显示每条 commit 的处理过程（过滤原因、分类结果）
 - 📊 **结构化输出**：输出 JSON 格式的分类结果
-- ✅ **完整测试**：48个测试用例覆盖核心功能
+- ✅ **完整测试**：79个测试用例覆盖核心功能
 
 ### 基础功能
 - 📊 自动从Git仓库提取指定时间范围的提交记录
@@ -22,7 +32,17 @@
 
 ## 版本历史
 
-### V0.2 (当前)
+### V0.4 (当前)
+- Task 聚合：按 type+scope 分组，关键词相似度聚类
+- LLM 摘要：自动生成聚合任务的高层描述
+- 增强输出结构：summary、source_commits、task_count
+
+### V0.3
+- Commit 拆分：支持 Markdown、列表、分隔符拆分
+- LLM 兜底拆分
+- 拆分后任务列表输出
+
+### V0.2
 - Commit 过滤：丢弃 Merge branch、test、短消息
 - Commit 分类：支持标准格式和关键词分类
 - 支持多行 commit message 解析
@@ -66,6 +86,11 @@
 ```
 
 服务启动后访问: http://localhost:7861
+
+默认使用 `latest` 镜像标签，如需指定版本：
+```bash
+./start.sh v0.4
+```
 
 ### 3. 本地开发
 
@@ -252,7 +277,7 @@ docker run -d \
     -e PROJECT_BASE_DIR=/app/project \
     --add-host=host.docker.internal:host-gateway \
     --restart unless-stopped \
-    naps-report-generator:main-v0.2
+    naps-report-generator:latest
 ```
 
 常用命令：
@@ -274,8 +299,9 @@ docker restart report-generator
 
 - [x] V0.1: 基础周报生成
 - [x] V0.2: Commit 过滤与分类
-- [ ] V0.3: Commit 拆分（结构化子任务）
-- [ ] V0.4: Task 聚合（高层任务抽象）
+- [x] V0.3: Commit 拆分（结构化子任务）
+- [x] V0.4: Task 聚合（高层任务抽象）
+- [ ] V0.5: 待规划
 
 ## 注意事项
 
