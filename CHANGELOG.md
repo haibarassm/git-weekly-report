@@ -1,9 +1,10 @@
 # CHANGELOG
 
-## [v0.4] - 2026-04-07
+## [v0.5] - 2026-04-07
 
 ### ✨ 新功能
 
+- feat: V0.5 摘要生成优化
 - feat: V0.4 添加聚合功能
 - feat: V0.3 添加 Commit 拆分功能
 - feat: 增强日志输出，显示每条commit的处理详情
@@ -21,9 +22,14 @@
 ### 📝 文档
 
 - docs: 添加 CHANGELOG for v0.4
+- docs: 添加 CHANGELOG for v0.4
 - docs: 添加 CHANGELOG for v0.3
 - docs: 添加 CHANGELOG for V0.2
 - docs: 更新 README 添加 V0.2 功能说明
+
+### ♻️ 代码重构
+
+- refactor: 拆分 prompt 为独立文件
 
 ### ✅ 测试
 
