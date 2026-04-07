@@ -296,13 +296,13 @@ class ReportApp:
 
     def _read_prompt(self) -> str:
         """读取系统提示词"""
-        prompt_path = Path(__file__).parent / "prompt" / "system_prompt.txt"
+        prompt_path = Path(__file__).parent / "prompt" / "generate_report_system_prompt.txt"
         with open(prompt_path, "r", encoding="utf-8") as f:
             return f.read()
 
     def _read_user_prompt(self) -> str:
         """读取用户提示词"""
-        prompt_path = Path(__file__).parent / "prompt" / "user_prompt.txt"
+        prompt_path = Path(__file__).parent / "prompt" / "generate_report_prompt.txt"
         with open(prompt_path, "r", encoding="utf-8") as f:
             return f.read()
 

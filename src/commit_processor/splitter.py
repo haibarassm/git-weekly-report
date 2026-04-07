@@ -1,5 +1,6 @@
 """Commit 处理模块 - 步骤3: 拆分"""
 import re
+from pathlib import Path
 from typing import List, Dict, Optional
 
 
@@ -21,6 +22,18 @@ class CommitSplitter:
     COAUTHOR_PATTERN = re.compile(r'Co-Authored-By:.*?$', re.MULTILINE)
     TRAILING_SPACES_PATTERN = re.compile(r'\s+$')
     LEADING_JUNK_PATTERN = re.compile(r'^[\s\'"\(\)\'"，,\-\*]+')  # 添加 ) ' " - *
+
+    @classmethod
+    def _read_prompt_template(cls, template_name: str) -> str:
+        """读取 prompt 模板文件"""
+        prompt_path = Path(__file__).parent.parent / "prompt" / template_name
+        try:
+            with open(prompt_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError:
+            import logging
+            logging.getLogger(__name__).warning(f"Prompt 模板文件不存在: {prompt_path}")
+            return ""
 
     @classmethod
     def _clean_task(cls, task: str) -> Optional[str]:
@@ -139,7 +152,13 @@ class CommitSplitter:
         if llm_client is None:
             return [message.strip()]
 
-        prompt = f"""请将以下 commit 消息拆分为多个独立的任务（最多 {cls.LLM_MAX_TASKS} 个）。
+        # 读取 prompt 模板
+        prompt_template = cls._read_prompt_template("split_commit_prompt.txt")
+        if prompt_template:
+            prompt = prompt_template.format(max_tasks=cls.LLM_MAX_TASKS, message=message)
+        else:
+            # fallback: 如果模板文件不存在，使用硬编码的 prompt
+            prompt = f"""请将以下 commit 消息拆分为多个独立的任务（最多 {cls.LLM_MAX_TASKS} 个）。
 
 要求：
 1. 每个任务应该是独立可理解的功能点

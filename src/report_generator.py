@@ -26,8 +26,8 @@ class ReportGenerator:
         self.llm_client = create_llm_client(config.get_llm_config())
         self.output_dir = config.get_output_dir()
         self.author = config.get_author()
-        self.system_prompt_path = Path(__file__).parent / "prompt" / "system_prompt.txt"
-        self.user_prompt_path = Path(__file__).parent / "prompt" / "user_prompt.txt"
+        self.system_prompt_path = Path(__file__).parent / "prompt" / "generate_report_system_prompt.txt"
+        self.user_prompt_path = Path(__file__).parent / "prompt" / "generate_report_prompt.txt"
 
         # 确保输出目录存在
         self.output_dir.mkdir(parents=True, exist_ok=True)

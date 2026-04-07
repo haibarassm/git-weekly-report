@@ -1,5 +1,6 @@
 """Commit 处理模块 - 步骤4: 聚合"""
 import re
+from pathlib import Path
 from typing import List, Dict
 from collections import Counter
 
@@ -56,6 +57,19 @@ class TaskAggregator:
 
     # 删除/清理类关键词（用于识别低优先级内容）
     CLEANUP_KEYWORDS = ['删除', '移除', '清理', '移出']
+
+    @classmethod
+    def _read_prompt_template(cls, template_name: str) -> str:
+        """读取 prompt 模板文件"""
+        from pathlib import Path
+        prompt_path = Path(__file__).parent.parent / "prompt" / template_name
+        try:
+            with open(prompt_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError:
+            import logging
+            logging.getLogger(__name__).warning(f"Prompt 模板文件不存在: {prompt_path}")
+            return ""
 
     @classmethod
     def _detect_status(cls, tasks: List[str]) -> str:
@@ -498,7 +512,13 @@ Commits:
 任务:
 {tasks_text}"""
 
-            prompt = f"""请根据以下 commit 标题和任务列表生成一个简洁的摘要（最多15个字）。
+            # 读取 prompt 模板
+            prompt_template = cls._read_prompt_template("generate_summary_prompt.txt")
+            if prompt_template:
+                prompt = prompt_template.format(input_info=input_info)
+            else:
+                # fallback: 如果模板文件不存在，使用硬编码的 prompt
+                prompt = f"""请根据以下 commit 标题和任务列表生成一个简洁的摘要（最多15个字）。
 
 {input_info}
 
