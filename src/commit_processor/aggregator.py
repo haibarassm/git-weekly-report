@@ -184,18 +184,62 @@ class TaskAggregator:
                 del word_count[word]
 
         if word_count:
-            # 取最常见的2个词作为核心功能名，用空格分隔
+            # 优先查找包含技术关键词的组合
+            tech_keywords_in_count = [w for w in word_count.keys() if '_' in w or any(c.isupper() for c in w)]
+            if tech_keywords_in_count:
+                # 有技术关键词，优先使用
+                tech_word = tech_keywords_in_count[0]
+                # 查找包含该技术关键词的原始任务，提取上下文
+                for task in tasks:
+                    if tech_word in task.lower():
+                        # 提取技术关键词前后的简短上下文
+                        idx = task.lower().find(tech_word)
+                        context_start = max(0, idx - 6)
+                        context_end = min(len(task), idx + len(tech_word) + 1)
+                        context = task[context_start:context_end].strip()
+                        # 清理操作词
+                        for prefix in ['新增', '添加', '修复', '优化', '修改', '删除', '更新', '实现', '调整', '的', '将', '对']:
+                            context = context.lstrip(prefix)
+                        if context and len(context) >= len(tech_word):
+                            return context[:20]
+                # 如果找不到上下文，直接返回技术关键词
+                return tech_word[:15]
+
+            # 没有技术关键词，取最常见的2个词
             top_words = [w for w, _ in word_count.most_common(2)]
             summary = ' '.join(top_words)
             if len(summary) >= 2:
                 return summary[:20]
 
-        # fallback: 使用第一个任务的前部分
+        # fallback: 使用第一个任务，但优先保留技术关键词
         first_task = tasks[0]
         # 移除操作前缀
-        for prefix in ['新增', '添加', '修复', '优化', '修改', '删除', '实现', '调整']:
+        for prefix in ['新增', '添加', '修复', '优化', '修改', '删除', '更新', '实现', '调整']:
             if first_task.startswith(prefix):
                 first_task = first_task[len(prefix):]
+
+        # 尝试提取技术关键词（驼峰、下划线命名）
+        tech_keywords = []
+        tech_keywords.extend(cls.UNDERSCORE_PATTERN.findall(first_task))
+        tech_keywords.extend(cls.CAMEL_CASE_PATTERN.findall(first_task))
+
+        # 如果找到技术关键词，优先使用
+        if tech_keywords:
+            # 取第一个技术关键词
+            tech_keyword = tech_keywords[0].lower()
+            # 如果还有空间，加上简短的上下文
+            if len(first_task) > len(tech_keyword) + 2:
+                # 提取技术关键词前的简短上下文（最多6个字）
+                idx = first_task.lower().find(tech_keyword)
+                if idx > 0:
+                    context = first_task[max(0, idx - 6):idx].strip()
+                    # 清理操作词和虚词
+                    for cleanup_word in ['新增', '添加', '修复', '优化', '修改', '删除', '更新', '实现', '调整', '的', '将', '对']:
+                        context = context.lstrip(cleanup_word)
+                    if context:
+                        return f"{context}{tech_keyword}"[:20]
+            return tech_keyword[:15]
+
         return first_task[:15]
 
     @classmethod
