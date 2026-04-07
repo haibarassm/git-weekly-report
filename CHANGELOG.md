@@ -20,6 +20,7 @@
 
 ### 📝 文档
 
+- docs: 添加 CHANGELOG for v0.4
 - docs: 添加 CHANGELOG for v0.3
 - docs: 添加 CHANGELOG for V0.2
 - docs: 更新 README 添加 V0.2 功能说明
