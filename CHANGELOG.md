@@ -1,5 +1,39 @@
 # CHANGELOG
 
+## [v0.6] - 2026-04-09
+
+### ✨ 新功能
+
+- feat: LangGraph StateGraph Agent 工作流（super_agent → generator → reviewer 循环）
+- feat: LLM 客户端工厂，支持 Ollama / DeepSeek / OpenAI
+- feat: Docker 内自动检测 host.docker.internal 连接 Ollama
+- feat: LangSmith 可观测性集成（环境变量配置）
+- feat: OutputValidator 输出校验（长度/结构/模式）
+- feat: Gradio Web UI（项目选择、分支、简约/专业模式切换）
+- feat: reviewer 审查结果未通过时自动触发重新生成
+
+### 🐛 问题修复
+
+- fix: reviewer passed=false 时 super_agent 不再忽略，触发重新生成
+- fix: summary 输出清理引号、书名号等包裹符号
+- fix: summary prompt 禁止日语输出，控制字数在 20 字以内
+- fix: Docker 端口映射（7861:7860）
+- fix: Git Bash MSYS 路径转换问题
+
+### 📝 文档
+
+- docs: 重写 README.md，包含架构图、项目结构、LangSmith 配置
+
+### ♻️ 代码重构
+
+- refactor: 重构为 core（框架）/ integrations（业务）/ ui（界面）三层架构
+- refactor: 移除 super_agent LLM 检查（规则判断即可，避免错误反馈）
+- refactor: Prompt 文件独立管理，缺失时抛 FileNotFoundError
+
+### ✅ 测试
+
+- test: 102 个测试用例全部通过
+
 ## [v0.5] - 2026-04-07
 
 ### ✨ 新功能
