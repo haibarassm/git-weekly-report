@@ -1,0 +1,163 @@
+# ====================
+# Java 相关
+# ====================
+# 编译输出
+target/
+out/
+bin/
+build/
+classes/
+*.class
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+build/
+gradle/
+gradlew
+gradlew.bat
+
+# ====================
+# Python 相关
+# ====================
+# 字节码和虚拟环境
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+.venv*/
+venv*/
+.env/
+.conda/
+
+# Python 包和测试
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+*.egg-info/
+*.egg
+dist/
+build/
+MANIFEST
+
+# ====================
+# IDE 和编辑器
+# ====================
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+*~
+.DS_Store
+.directory
+
+# ====================
+# 日志和临时文件
+# ====================
+*.log
+*.tmp
+*.temp
+*.cache
+*.pid
+*.seed
+*.pid.lock
+
+# ====================
+# 环境变量和密钥（重要！）
+# ====================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+*.p12
+secrets.yml
+config/secrets.yml
+application-secrets.yml
+*.secret
+
+# ====================
+# 依赖和包管理
+# ====================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ====================
+# 构建和部署产物
+# ====================
+*.war
+*.ear
+*.jar
+!/.mvn/wrapper/maven-wrapper.jar
+*.zip
+*.tar.gz
+*.tgz
+*.dmg
+*.exe
+*.msi
+
+# ====================
+# 测试和覆盖率
+# ====================
+junit.xml
+test-output/
+jacoco.exec
+*.exec
+test-results/
+
+# ====================
+# 文档（可选，如果太大可以排除）
+# ====================
+*.pdf
+*.doc
+*.docx
+*.md.html
+site/
+apidocs/
+
+# ====================
+# 数据库和存储
+# ====================
+*.db
+*.sqlite
+*.sqlite3
+*.mdb
+*.accdb
+
+# ====================
+# Docker 相关（除非你需要）
+# ====================
+*.tar
+docker-compose.override.yml
+.dockerignore

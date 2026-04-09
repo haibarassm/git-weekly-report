@@ -7,7 +7,7 @@ echo ""
 
 # 获取 Git 分支名称
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-VERSION=${1:-"v0.4"}
+VERSION=${1:-"v0.6"}
 
 # 使用分支名和版本作为标签
 IMAGE_NAME="naps-report-generator:${BRANCH_NAME}-${VERSION}"
@@ -69,6 +69,7 @@ docker run -d \
     -v "${WIN_PROJECT_PATH}\\output:/app/output" \
     -v "${WIN_BASE_PATH}:/app/project:ro" \
     -e PROJECT_BASE_DIR=/app/project \
+    -e LANGCHAIN_API_KEY="${LANGCHAIN_API_KEY}" \
     --add-host=host.docker.internal:host-gateway \
     --restart unless-stopped \
     ${LATEST_IMAGE_NAME}

@@ -9,7 +9,7 @@ import shutil
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.git_utils import GitUtils
+from src.integrations.git_report.git_utils import GitUtils
 
 
 class TestGitUtils(unittest.TestCase):

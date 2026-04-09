@@ -44,6 +44,26 @@ class Config:
         """获取作者信息（用于筛选提交记录）"""
         return self._config.get("author", "")
 
+    def get_langsmith_config(self) -> Dict[str, Any]:
+        """获取 LangSmith 配置（用于 LangChain 可观测性）"""
+        langsmith_config = self._config.get("langsmith", {})
+
+        # 从环境变量获取配置（如果存在）
+        env_config = {
+            "enabled": os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true",
+            "api_key": os.getenv("LANGCHAIN_API_KEY", ""),
+            "project": os.getenv("LANGCHAIN_PROJECT", langsmith_config.get("project", "naps-report-generator")),
+            "endpoint": os.getenv("LANGCHAIN_ENDPOINT", langsmith_config.get("endpoint", "https://api.smith.langchain.com")),
+        }
+
+        # 合并配置文件和环境变量
+        return {
+            "enabled": langsmith_config.get("enabled", False) or env_config["enabled"],
+            "api_key": langsmith_config.get("api_key", "") or env_config["api_key"],
+            "project": env_config["project"],
+            "endpoint": env_config["endpoint"],
+        }
+
 
 # 全局配置实例
 config = Config()

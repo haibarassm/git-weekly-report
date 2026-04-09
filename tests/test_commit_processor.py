@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.commit_processor import (
+from src.integrations.git_report.commit_processor import (
     CommitFilter,
     CommitClassifier,
     CommitSplitter,
@@ -277,7 +277,7 @@ class TestDataStructure(unittest.TestCase):
 
     def test_classified_commit_to_dict(self):
         """测试 ClassifiedCommit 转换为字典"""
-        from src.commit_processor import ClassifiedCommit
+        from src.integrations.git_report.commit_processor import ClassifiedCommit
 
         commit = ClassifiedCommit(
             type="feature",

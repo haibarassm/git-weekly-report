@@ -38,7 +38,11 @@ class TaskAggregator:
     CAMEL_CASE_PATTERN = re.compile(r'[a-z]+[A-Z][a-zA-Z]*')
 
     # 环境名称（相对固定，用于过滤）
-    ENV_NAMES = ['新加坡', '德国', '巴西', 'SG', 'DE', 'BR']
+    # 中文环境名（直接替换）
+    ENV_NAMES_CN = ['新加坡', '德国', '巴西']
+    # 英文环境名（使用正则表达式确保单词边界匹配）
+    ENV_NAMES_EN = ['SG', 'DE', 'BR', 'sg', 'de', 'br']
+    ENV_PATTERNS_EN = [re.compile(rf'\b{re.escape(name)}\b') for name in ENV_NAMES_EN]
 
     # 通用中文技术关键词（不包含项目特定的）
     COMMON_TECH_KEYWORDS = {
@@ -63,13 +67,10 @@ class TaskAggregator:
         """读取 prompt 模板文件"""
         from pathlib import Path
         prompt_path = Path(__file__).parent.parent / "prompt" / template_name
-        try:
-            with open(prompt_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except FileNotFoundError:
-            import logging
-            logging.getLogger(__name__).warning(f"Prompt 模板文件不存在: {prompt_path}")
-            return ""
+        if not prompt_path.exists():
+            raise FileNotFoundError(f"Prompt 模板文件不存在: {prompt_path}")
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            return f.read()
 
     @classmethod
     def _detect_status(cls, tasks: List[str]) -> str:
@@ -87,35 +88,43 @@ class TaskAggregator:
         if not text:
             return text
 
-        # 纯状态词列表（当结果只有这些词时，可能没有实际功能内容）
-        pure_status_words = ['发布', '上线', '提测', '测试']
-
         # 占位符列表（用于识别没有实际功能内容的情况）
         placeholders = ['xxx', '版本']
+        status_words = ['发布', '上线', '提测', '测试']
 
-        # 先检查：移除环境名称和占位符后，是否只剩下状态词
-        text_after_env_and_placeholder = text
-        for env in cls.ENV_NAMES:
-            text_after_env_and_placeholder = text_after_env_and_placeholder.replace(env, '')
-        for placeholder in placeholders:
-            text_after_env_and_placeholder = text_after_env_and_placeholder.replace(placeholder, '')
-        text_after_env_and_placeholder = text_after_env_and_placeholder.strip()
+        # 先检查原始文本：如果包含占位符，且移除占位符后只剩下环境名和状态词，则返回空
+        has_placeholder = any(placeholder in text for placeholder in placeholders)
+        if has_placeholder:
+            temp_text = text
+            for placeholder in placeholders:
+                temp_text = temp_text.replace(placeholder, '')
+            for env in cls.ENV_NAMES_CN + cls.ENV_NAMES_EN:
+                temp_text = temp_text.replace(env, '')
+            for deploy_word in ['合并', '环境']:
+                temp_text = temp_text.replace(deploy_word, '')
+            temp_text = ' '.join(temp_text.split())
 
-        # 如果移除环境名和占位符后只剩下纯状态词，说明没有实际功能内容
-        if text_after_env_and_placeholder in pure_status_words:
-            return ''
+            # 如果只有状态词，没有其他功能词，则返回空
+            if temp_text in status_words:
+                return ''
 
-        # 正常过滤：移除环境名称
-        for env in cls.ENV_NAMES:
-            text = text.replace(env, '')
-        # 移除部署操作词（但保留状态词：发布、上线）
+        # 正常过滤：移除各种词，但保留有效的状态词和功能词
+        # 移除部署操作词
         for deploy_word in ['合并', '环境']:
-            text = text.replace(deploy_word, '')
+            text = text.replace(deploy_word, ' ')
+        # 移除环境名称
+        for env in cls.ENV_NAMES_CN:
+            text = text.replace(env, ' ')
+        for env in cls.ENV_NAMES_EN:
+            text = text.replace(env, ' ')
         # 移除占位符
         for placeholder in placeholders:
-            text = text.replace(placeholder, '')
+            text = text.replace(placeholder, ' ')
 
-        return text.strip()
+        # 清理多余空格
+        text = ' '.join(text.split())
+
+        return text.strip() if text else ''
 
     @classmethod
     def _generate_summary_with_status(cls, tasks: List[str], scope: str) -> str:
@@ -322,7 +331,8 @@ class TaskAggregator:
             # 步骤2: 提取所有tasks及其关键词和原始message
             all_tasks = []
             for commit in commits:
-                original_message = commit.get('original_message', commit.get('source_commit', ''))
+                # 获取原始消息（优先使用 original_message，其次 message，最后 source_commit）
+                original_message = commit.get('original_message', commit.get('message', commit.get('source_commit', '')))
                 # 构造格式化的 commit 标题
                 commit_title = cls._format_commit_title(commit_type, scope, original_message)
                 for task in commit.get('tasks', []):
@@ -534,6 +544,34 @@ class TaskAggregator:
         return filtered
 
     @classmethod
+    def _clean_summary(cls, text: str) -> str:
+        """清理 LLM 输出中的包裹符号和多余标点"""
+        if not text:
+            return text
+
+        # 去掉首尾引号（中英文）
+        while text and text[0] in ('"', '\u201c', '\u300c', '\u300e', '\uff08'):
+            text = text[1:]
+        while text and text[-1] in ('"', '\u201d', '\u300d', '\u300f', '\uff09'):
+            # 保留末尾的 (状态) 括号
+            if text[-1] == '\uff09' and '(' in text:
+                break
+            if text[-1] == ')' and '(' in text:
+                break
+            text = text[:-1]
+
+        # 去掉首尾书名号
+        while text and text[0] in ('\u300a', '\u300e'):
+            text = text[1:]
+        while text and text[-1] in ('\u300b', '\u300f'):
+            text = text[:-1]
+
+        # 去掉末尾句号
+        text = text.rstrip('。.')
+
+        return text.strip()
+
+    @classmethod
     def _generate_summary(cls, aggregated: List[Dict], llm_client=None) -> List[Dict]:
         """使用 LLM 生成高层摘要"""
         if llm_client is None:
@@ -577,11 +615,19 @@ Commits:
 
 摘要："""
 
-            logger.debug(f">>> [LLM 摘要生成] 输入:\n{input_info}")
+            logger.info(f">>> [LLM 摘要生成] 输入:\n{input_info}")
 
             try:
                 llm_summary = llm_client.generate(prompt).strip()
-                logger.debug(f">>> [LLM 原始输出] {llm_summary}")
+                logger.info(f">>> [LLM 原始输出] {llm_summary}")
+
+                # 清理 LLM 输出中的包裹符号
+                llm_summary = cls._clean_summary(llm_summary)
+
+                # 如果 LLM 摘要太短（<3字），使用第一个任务作为兜底
+                if len(llm_summary) < 3 and item.get('tasks'):
+                    llm_summary = item['tasks'][0][:15]
+                    logger.warning(f"LLM 摘要太短，使用任务兜底: {llm_summary}")
 
                 # 如果 LLM 没有包含状态，我们手动检测并添加
                 status = cls._detect_status(item.get('tasks', []))
@@ -590,15 +636,11 @@ Commits:
                 else:
                     summary = llm_summary
 
-                # 限制摘要长度
-                if len(summary) > 30:
-                    summary = summary[:30] + "..."
-
                 # 如果是 release scope，确保过滤了环境词
                 if item.get('scope') == 'release':
                     summary = cls._filter_release_words(summary)
 
-                logger.debug(f">>> [LLM 摘要生成] 最终输出: {summary}")
+                logger.info(f">>> [LLM 摘要生成] 最终输出: {summary}")
                 item['summary'] = summary
             except Exception as e:
                 logger.warning(f"LLM 摘要生成失败: {e}，使用 rule-based 摘要")

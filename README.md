@@ -1,314 +1,177 @@
-# NAPS Git周报生成器
+# NAPS Git 周报生成器
 
-基于Git提交记录自动生成周报的工具，使用Gradio提供Web界面，支持多种LLM提供商（Ollama、DeepSeek、OpenAI）。
+基于 Git 提交记录自动生成周报，使用 LangGraph Agent 工作流 + Gradio Web 界面，支持 Ollama / DeepSeek / OpenAI 等多种 LLM。
 
-## 功能特性
+## 架构
 
-### V0.4 新增
-- 🔗 **Task 聚合**：将细粒度任务聚合为高层抽象
-- 📋 **关键词匹配**：智能识别相似任务并合并
-- 🤖 **LLM 摘要**：自动生成任务组的高层描述
-- 📊 **增强输出**：包含 summary、source_commits、task_count
+```
+用户输入 (Git commits)
+        │
+        ▼
+┌─ LangGraph StateGraph ─────────────────────┐
+│                                             │
+│  super_agent ──→ generator ──→ reviewer ─┐  │
+│       ▲                                  │  │
+│       └──────────────────────────────────┘  │
+│       │                                     │
+│       └──→ END (规则判断通过)               │
+└─────────────────────────────────────────────┘
+        │
+        ▼
+    最终周报文本
+```
 
-### V0.3 新增
-- ✂️ **Commit 拆分**：支持 Markdown、列表、分隔符拆分
-- 🧩 **LLM 兜底**：无法拆分时使用 LLM 智能拆分
-
-### V0.2 新增
-- 🔍 **智能过滤**：自动过滤 Merge branch、test commit、短消息
-- 🏷️ **自动分类**：支持标准格式（Conventional Commits）和关键词分类
-- 📝 **详细日志**：显示每条 commit 的处理过程（过滤原因、分类结果）
-- 📊 **结构化输出**：输出 JSON 格式的分类结果
-- ✅ **完整测试**：79个测试用例覆盖核心功能
-
-### 基础功能
-- 📊 自动从Git仓库提取指定时间范围的提交记录
-- 🤖 使用LLM生成简洁易懂的周报
-- 🎯 支持按作者筛选提交记录
-- 🌐 友好的Web界面（Gradio）
-- 📥 支持下载生成的周报（Markdown格式）
-- 🐳 支持Docker部署
-- ⚙️ 灵活的配置管理
-
-## 版本历史
-
-### V0.4 (当前)
-- Task 聚合：按 type+scope 分组，关键词相似度聚类
-- LLM 摘要：自动生成聚合任务的高层描述
-- 增强输出结构：summary、source_commits、task_count
-
-### V0.3
-- Commit 拆分：支持 Markdown、列表、分隔符拆分
-- LLM 兜底拆分
-- 拆分后任务列表输出
-
-### V0.2
-- Commit 过滤：丢弃 Merge branch、test、短消息
-- Commit 分类：支持标准格式和关键词分类
-- 支持多行 commit message 解析
-- 详细日志输出
-
-### V0.1
-- 基础周报生成功能
-- 多项目、多分支支持
-- Gradio Web 界面
+- **super_agent**: 纯规则判断（OutputValidator + 最大迭代次数），决定继续生成还是结束
+- **generator**: 根据 commit 数据和 reviewer 反馈生成/修改周报
+- **reviewer**: 审查草稿质量，输出优化后的内容和问题列表
+- **LangSmith**: 可选的可观测性追踪（Docker 环境通过环境变量配置）
 
 ## 快速开始
 
-### 1. 配置
+### Docker 部署（推荐）
 
-编辑 `config.json` 文件，配置作者信息和LLM设置：
+```bash
+# Linux / macOS / Git Bash
+bash start.sh
+
+# Windows CMD
+start.bat
+```
+
+访问 http://localhost:7861
+
+### 本地开发
+
+```bash
+pip install -r requirements.txt
+python -m src.ui.gradio_server
+```
+
+## 配置
+
+### config.json
 
 ```json
 {
   "author": "Your Name <your.email@example.com>",
   "llm": {
     "provider": "ollama",
-    "model": "qwen2.5:14b",
-    "api_base": "http://host.docker.internal:11434",
+    "model": "llama3.1:8b",
+    "api_base": "http://localhost:11434",
     "api_key": "",
     "timeout": 120,
     "temperature": 0.7,
     "max_tokens": 2000
   },
-  "output_dir": "/app/output"
+  "langsmith": {
+    "enabled": true,
+    "project": "report_generator"
+  },
+  "output_dir": "./output"
 }
 ```
 
-### 2. 使用Docker部署
+### LLM 提供商
+
+| 提供商 | provider | 说明 |
+|--------|----------|------|
+| Ollama | `ollama` | 本地运行，Docker 内自动将 localhost 替换为 host.docker.internal |
+| DeepSeek | `deepseek` | 需要 `api_key` |
+| OpenAI | `openai` | 需要 `api_key` |
+
+### LangSmith 可观测性
+
+**本地运行**: `config.json` 中设置 `"langsmith": {"enabled": true}` 并设置环境变量：
 
 ```bash
-# 启动服务（自动构建并运行）
-./start.sh
-
-# 停止服务
-./stop.sh
+export LANGCHAIN_API_KEY="lsv2_pt_..."
 ```
 
-服务启动后访问: http://localhost:7861
-
-默认使用 `latest` 镜像标签，如需指定版本：
-```bash
-./start.sh v0.4
-```
-
-### 3. 本地开发
+**Docker 运行**: 环境变量通过 `start.sh` / `start.bat` 自动传入容器：
 
 ```bash
-# 安装依赖
-pip install -r requirements.txt
+# 确保 shell 中已设置
+export LANGCHAIN_API_KEY="lsv2_pt_..."
 
-# 启动服务
-python -m src.app
+# 然后部署
+bash start.sh
 ```
 
-## 配置说明
+访问 [LangSmith](https://smith.langchain.com) 查看追踪记录。
 
-### LLM提供商
-
-支持三种LLM提供商：
-
-#### Ollama（推荐）
-```json
-{
-  "provider": "ollama",
-  "model": "qwen2.5:14b",
-  "api_base": "http://host.docker.internal:11434"
-}
-```
-
-#### DeepSeek
-```json
-{
-  "provider": "deepseek",
-  "model": "deepseek-chat",
-  "api_key": "your-api-key",
-  "api_base": "https://api.deepseek.com"
-}
-```
-
-#### OpenAI
-```json
-{
-  "provider": "openai",
-  "model": "gpt-4o",
-  "api_key": "your-api-key",
-  "api_base": "https://api.openai.com/v1"
-}
-```
-
-### 作者配置
-
-在 `config.json` 中配置你的Git用户信息，用于筛选提交记录：
-
-```json
-{
-  "author": "Your Name <your.email@example.com>"
-}
-```
-
-可以通过以下命令查看你的Git配置：
-
-```bash
-git config user.name
-git config user.email
-```
-
-## Commit 分类规则（V0.2）
-
-### 标准格式
-
-支持 Conventional Commits 格式：`type(scope): message`
-
-| Type | 分类 | 说明 |
-|------|------|------|
-| feat | feature | 新功能 |
-| fix | fix | 问题修复 |
-| refactor | refactor | 代码重构 |
-
-示例：
-```
-feat(perms): 添加角色权限管理
-fix(auth): 修复登录问题
-refactor(db): 优化数据库查询
-```
-
-### 关键词分类
-
-对于非标准格式的 commit，根据关键词自动分类：
-
-| 关键词 | 分类 |
-|--------|------|
-| 发布、上线、新加坡、德国、巴西 | feature |
-| 修复、bug、问题 | fix |
-| 其他 | refactor |
-
-### 过滤规则
-
-以下 commit 会被自动过滤：
-- 包含 `Merge branch` 的合并提交
-- 包含 `test` 的测试提交
-- 消息长度 < 5 的提交
-
-## 目录结构
+## 项目结构
 
 ```
-naps_report_generator/
-├── src/
-│   ├── prompt/
-│   │   ├── system_prompt.txt    # 系统提示词
-│   │   └── user_prompt.txt      # 用户提示词
-│   ├── commit_processor.py      # V0.2: Commit过滤和分类
-│   ├── config.py                # 配置管理
-│   ├── git_utils.py             # Git工具
-│   ├── llm_client.py            # LLM客户端
-│   ├── app.py                   # Gradio应用入口
-│   └── report_generator.py      # 报告生成器
-├── tests/                       # 测试用例
-│   ├── test_commit_processor.py # V0.2: 分类测试
-│   ├── test_app.py              # V0.2: 边界测试
-│   ├── test_git_utils.py
-│   ├── test_llm_client.py
-│   └── test_config.py
-├── config.json                  # 配置文件
-├── requirements.txt             # Python依赖
-├── Dockerfile                   # Docker镜像
-├── start.sh                     # 启动脚本
-├── stop.sh                      # 停止脚本
-└── README.md                    # 项目说明
+src/
+├── core/                          # 核心框架
+│   ├── agents/                    # Agent 实现
+│   │   ├── base.py               # Agent 基类
+│   │   ├── generator.py          # 生成器 Agent
+│   │   ├── reviewer.py           # 审查器 Agent
+│   │   └── super_agent.py        # 超级 Agent（规则判断）
+│   ├── llm/                      # LLM 客户端
+│   │   ├── base.py               # 客户端基类
+│   │   └── client.py             # 工厂方法 + Ollama/DeepSeek/OpenAI 实现
+│   ├── workflow/                  # LangGraph 工作流
+│   │   ├── state.py              # WorkflowState 数据类
+│   │   └── graph.py              # StateGraph 定义 + 节点函数
+│   ├── validators/                # 输出校验
+│   │   └── output.py             # OutputValidator
+│   └── sources/                   # 数据源抽象
+│       └── base.py               # 数据源基类
+├── integrations/                  # 业务集成
+│   └── git_report/               # Git 周报集成
+│       ├── git_utils.py          # Git 操作工具
+│       ├── report_service.py     # 周报服务（UI 调用入口）
+│       ├── source.py             # Git 数据源
+│       ├── commit_processor/     # Commit 处理管线
+│       │   ├── filter_classifier.py  # 过滤 + 分类
+│       │   ├── splitter.py           # Commit 拆分
+│       │   ├── aggregator.py         # Task 聚合 + LLM 摘要
+│       │   └── processor.py          # 处理管线编排
+│       └── prompt/               # Commit 处理用提示词
+├── prompts/                       # Agent 提示词
+│   └── agents/                   # 各 Agent 的 prompt 文件
+├── ui/                            # UI 层
+│   └── gradio_server.py          # Gradio Web 界面
+└── config.py                      # 配置管理
 ```
 
-## 使用说明
+## 使用流程
 
-1. 在Web界面选择项目和分支
-2. 设置时间范围（天数）
-3. 点击"生成周报"按钮
-4. 查看生成的周报内容并下载
-
-## 查看处理日志
-
-V0.2 会显示详细的处理日志：
-
-```bash
-docker logs --tail 100 report-generator
-```
-
-日志示例：
-```
-============================================================
-V0.2: Commit 处理开始
-收集到 50 条原始 commit
-============================================================
->>> 步骤1: 过滤 commit
-  [过滤] abc123 | Merge branch | Merge branch 'feature'
-过滤统计: {'Merge branch': 5, '包含test': 3}
-============================================================
->>> 步骤2: 分类 commit
-  [feature/perms] def456 | feat(perms): 添加权限管理
-  [fix/auth] ghi789 | fix(auth): 修复登录问题
->>> 分类统计: {'feature': 20, 'fix': 10, 'refactor': 5}
-============================================================
-```
+1. 选择项目 → 选择分支 → 添加到列表
+2. 设置天数范围（默认 7 天）
+3. 选择模式：简约模式 / 专业模式
+4. 点击"生成周报"
+5. 查看结果并下载
 
 ## 测试
 
 ```bash
-# 运行所有测试
-python -m unittest discover tests
-
-# 运行单个测试文件
-python -m unittest tests.test_commit_processor
-python -m unittest tests.test_git_utils
-python -m unittest tests.test_llm_client
-python -m unittest tests.test_config
-python -m unittest tests.test_app
+python -m pytest tests/ -v
 ```
 
-## Docker命令说明
+当前 102 个测试用例覆盖：Commit 过滤/分类/拆分/聚合、Git 工具、LLM 客户端、配置管理、工作流状态、输出校验。
 
-启动容器使用的命令：
+## Docker 常用命令
+
 ```bash
-docker run -d \
-    --name report-generator \
-    -p 7861:7860 \
-    -v "C:/Users/sherry/project/naps_report_generator/config.json:/app/config.json" \
-    -v "C:/Users/sherry/project/naps_report_generator/output:/app/output" \
-    -v "C:/Users/sherry/project:/app/project:ro" \
-    -e PROJECT_BASE_DIR=/app/project \
-    --add-host=host.docker.internal:host-gateway \
-    --restart unless-stopped \
-    naps-report-generator:latest
+docker logs -f report-generator     # 查看日志
+docker stop report-generator        # 停止
+docker restart report-generator     # 重启
+docker rm -f report-generator       # 删除
 ```
 
-常用命令：
-```bash
-# 查看日志
-docker logs -f report-generator
+## 版本历史
 
-# 查看最近日志
-docker logs --tail 50 report-generator
-
-# 进入容器
-docker exec -it report-generator bash
-
-# 重启容器
-docker restart report-generator
-```
-
-## 开发路线图
-
-- [x] V0.1: 基础周报生成
-- [x] V0.2: Commit 过滤与分类
-- [x] V0.3: Commit 拆分（结构化子任务）
-- [x] V0.4: Task 聚合（高层任务抽象）
-- [ ] V0.5: 待规划
-
-## 注意事项
-
-- 确保Docker容器可以访问Git仓库
-- 使用Ollama时，确保Ollama服务正在运行
-- 生成的周报保存在 `output/` 目录中
-- 周报仅包含配置中指定的作者的提交记录
+| 版本 | 内容 |
+|------|------|
+| V0.6 | LangGraph Agent 工作流 + LangSmith 集成 |
+| V0.5 | 摘要生成优化 |
+| V0.4 | Task 聚合（高层任务抽象） |
+| V0.3 | Commit 拆分（结构化子任务） |
+| V0.2 | Commit 过滤与分类 |
+| V0.1 | 基础周报生成 |
 
 ## 许可证
 

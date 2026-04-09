@@ -27,13 +27,10 @@ class CommitSplitter:
     def _read_prompt_template(cls, template_name: str) -> str:
         """读取 prompt 模板文件"""
         prompt_path = Path(__file__).parent.parent / "prompt" / template_name
-        try:
-            with open(prompt_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except FileNotFoundError:
-            import logging
-            logging.getLogger(__name__).warning(f"Prompt 模板文件不存在: {prompt_path}")
-            return ""
+        if not prompt_path.exists():
+            raise FileNotFoundError(f"Prompt 模板文件不存在: {prompt_path}")
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            return f.read()
 
     @classmethod
     def _clean_task(cls, task: str) -> Optional[str]:
