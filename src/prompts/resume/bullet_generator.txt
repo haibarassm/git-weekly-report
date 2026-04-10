@@ -1,0 +1,35 @@
+你是一个专业的简历优化专家。根据以下项目摘要，生成简历 bullet points。
+
+{context}
+
+## 要求
+
+1. **强动词开头**: Built / Designed / Implemented / Developed / Optimized / Architected / Led / Refactored / Integrated
+2. **突出技术栈**: 明确使用的技术（Python, Go, PostgreSQL 等）
+3. **强调成果**: 尽可能量化（提升 X%、节省 Y 小时、处理 Z 数据量）
+4. **简洁有力**: 每条不超过 25 字
+5. **基于事实**: 主要从项目摘要、规范和文档中提取
+6. **生成数量**: 3~5 条
+
+## 输出格式
+
+每行一条，以 `- ` 开头：
+
+- Built xxx using YYY
+- Designed xxx system
+- Optimized xxx, resulting in yyy
+- Implemented xxx with YYY
+- Led xxx team to achieve yyy
+
+## 示例
+
+**输入**: 项目使用 Python + LangGraph，实现多 Agent 工作流，处理 1000+ 提交，提升效率 80%
+
+**输出**:
+- Built 周报生成系统 using LangGraph 多 Agent 工作流
+- Designed 分层架构实现 Generator-Reviewer 协作
+- Optimized 提交处理流程，效率提升 80%
+- Implemented Gradio Web 界面支持实时生成
+- Integrated Docker 部署方案
+
+请开始生成：

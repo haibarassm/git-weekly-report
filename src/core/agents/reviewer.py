@@ -9,7 +9,7 @@ from ..llm.client import get_llm_client
 class ReviewerAgent(BaseAgent):
     """内容审查 Agent"""
 
-    PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts" / "agents"
+    PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts" / "weekly_report"
 
     def __init__(self):
         super().__init__("reviewer")

@@ -1,0 +1,21 @@
+{
+  "projects": [
+    {
+      "id": "example-project",
+      "name": "示例项目",
+      "description": "项目描述",
+      "sources": [
+        {
+          "path": "/path/to/project",
+          "branch": "main"
+        }
+      ],
+      "tech_stack": ["Python", "Go"],
+      "highlights": [
+        "项目亮点1",
+        "项目亮点2"
+      ],
+      "notes": "备注信息"
+    }
+  ]
+}

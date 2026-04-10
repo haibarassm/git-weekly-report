@@ -1,5 +1,57 @@
 # CHANGELOG
 
+## [v0.7] - 2026-04-10
+
+### ✨ 新功能
+
+- feat: 简历生成系统（基于 Git commits 自动生成简历 bullets）
+- feat: 公共 Git 模块（core.git）- 周报和简历共享
+- feat: 项目总结 Agent（压缩大量 commit 信息）
+- feat: Bullet 生成 Agent（基于摘要 + claude.md + readme 生成 bullets）
+- feat: 项目管理 Tab（仓库选择、分支选择、文档上传）
+- feat: 文档智能分析（自动提取项目描述、技术栈、亮点）
+- feat: 历史简历上传（基于现有简历修改）
+- feat: Word 文档导出（python-docx）
+- feat: 提示词目录重构（common / weekly_report / resume）
+
+### 🐛 问题修复
+
+- fix: 文档存储优化（从 JSON 内联改为文件系统存储，按项目分目录）
+- fix: 项目描述优化（业务场景 + 技术能力格式，80-120 字）
+- fix: UI 布局改进（加载/删除按钮移到顶部）
+- fix: 文档上传去重（内容相同则覆盖，不同则添加序号）
+- fix: CommitFetcher 统一接口（days 参数控制周报/简历）
+- fix: 配置文件路径支持环境变量（NAPS_CONFIG_PATH, NAPS_PROJECTS_PATH）
+- fix: UI 模块拆分（main.py + tabs/）
+- fix: DOCS_BASE_DIR 路径层级错误（3 层改为 4 层）
+- fix: 保存时清理旧文档（删除残留文件）
+
+### 📝 文档
+
+- docs: 添加 V0.7 设计文档
+- docs: 添加配置示例文件（config/*.example）
+- docs: 更新 .gitignore（配置文件不提交）
+
+### ♻️ 代码重构
+
+- refactor: 抽取公共 Git 模块（core.git）
+- refactor: 重构提示词目录结构（按功能分类）
+- refactor: 文档分析 Agent 优化（JSON/Text 双解析模式）
+
+### ✅ 测试
+
+- test: 新增 14 个 V0.7 测试用例
+- test: 全部 116 个测试通过
+
+### 🔧 其他
+
+- config: 支持环境变量覆盖配置路径
+- config: 默认配置文件（config/naps.json, config/projects.json）
+- config: 文档存储结构（config/docs/{project_id}/）
+- docker: 更新部署脚本（挂载用户配置目录）
+
+---
+
 ## [v0.6] - 2026-04-09
 
 ### ✨ 新功能

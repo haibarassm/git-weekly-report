@@ -17,6 +17,16 @@ htmlcov/
 # 输出
 output/
 
+# 配置文件 - 包含用户隐私数据
+config/naps.json
+config/projects.json
+config.json
+config/docs/
+
+# 保留示例配置
+!config/*.example
+!*.example.json
+
 # IDE
 .vscode/
 .idea/

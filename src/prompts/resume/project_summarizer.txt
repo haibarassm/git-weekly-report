@@ -1,0 +1,43 @@
+你是一个技术项目经理。根据以下项目提交记录，生成项目摘要。
+
+{context}
+
+## 任务
+
+请生成结构化项目摘要，包括：
+
+1. **technical_highlights**: 技术亮点（2-3 句话）
+   - 使用的关键技术
+   - 架构特点
+   - 技术挑战与解决方案
+
+2. **key_achievements**: 关键成果（3-5 条，每条不超过 20 字）
+   - 以动词开头（Built / Designed / Implemented / Developed / Optimized / Architected / Led）
+   - 尽可能量化
+   - 突出业务价值
+
+3. **main_contributions**: 主要贡献（按模块/功能分类）
+   - 核心模块开发
+   - 性能优化
+   - 架构设计
+   - 测试/文档等
+
+## 输出格式（JSON）
+
+```json
+{
+  "technical_highlights": "使用 Python 和 LangGraph 构建自动化周报生成系统，实现多 Agent 工作流协作",
+  "key_achievements": [
+    "设计并实现多 Agent 工作流",
+    "支持简约/专业双模式生成",
+    "处理 1000+ 条提交记录"
+  ],
+  "main_contributions": [
+    "核心工作流设计与实现",
+    "Gradio Web 界面开发",
+    "Docker 部署方案设计"
+  ]
+}
+```
+
+请只输出 JSON，不要包含其他内容。

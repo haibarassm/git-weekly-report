@@ -74,11 +74,11 @@ class ContentGenerationWorkflow:
         mode = self._mode
 
         if mode == "professional":
-            system_prompt = self.generator._read_prompt("agents/generator_professional.txt")
+            system_prompt = self.generator._read_prompt("weekly_report/generator_professional.txt")
             user_prompt = f"请根据以下结构化的任务数据生成项目经历汇报：\n\n{input_text}"
         else:
-            system_prompt = self.generator._read_prompt("agents/generator_simple.txt")
-            user_prompt_template = self.generator._read_prompt("agents/generator_simple_user.txt")
+            system_prompt = self.generator._read_prompt("weekly_report/generator_simple.txt")
+            user_prompt_template = self.generator._read_prompt("weekly_report/generator_simple_user.txt")
             user_prompt = user_prompt_template.replace("{commits}", input_text)
 
         # 如果有上一轮的反馈，附加到 prompt 中让 generator 参考

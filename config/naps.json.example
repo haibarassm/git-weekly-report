@@ -1,0 +1,19 @@
+{
+  "author": "Your Name <your.email@example.com>",
+  "base_dir": "/path/to/your/projects",
+  "llm": {
+    "provider": "ollama",
+    "model": "llama3.1:8b",
+    "api_base": "http://localhost:11434",
+    "api_key": "",
+    "temperature": 0.7,
+    "max_tokens": 2000,
+    "timeout": 120
+  },
+  "langsmith": {
+    "enabled": true,
+    "project": "naps_generator",
+    "api_key": "your-langsmith-api-key"
+  },
+  "output_dir": "./output"
+}
