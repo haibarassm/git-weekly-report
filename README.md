@@ -1,6 +1,48 @@
-# NAPS Git 周报生成器
+# NAPS Git 周报与简历生成器
 
-基于 Git 提交记录自动生成周报，使用 LangGraph Agent 工作流 + Gradio Web 界面，支持 Ollama / DeepSeek / OpenAI 等多种 LLM。
+基于 Git 提交记录自动生成周报和简历，使用 **LangGraph Agent 工作流** + **Gradio Web 界面**，支持 Ollama / DeepSeek / OpenAI 等多种 LLM。
+
+## ✨ 主要功能
+
+- **周报生成**: 根据 Git commits 自动生成格式规范的周报
+- **简历生成**: 从多个项目中提取信息生成简历 bullets
+- **公司工作经历**: 基于多个项目自动生成公司工作经历描述
+
+## 🤖 AI Agent 驱动
+
+本项目采用 **多 Agent 协作模式**，通过 LangGraph 实现工作流编排：
+
+### 周报生成工作流
+```
+super_agent ──→ generator ──→ reviewer ──┐
+     ▲                                   │
+     └───────────────────────────────────┘
+     │
+     └──→ END (规则判断通过)
+```
+
+### 简历生成工作流
+```
+filter → classify → aggregate → generate → END
+```
+
+### 核心组件
+
+| 组件 | 说明 | AI 能力 |
+|------|------|---------|
+| GeneratorAgent | 生成周报/简历内容 | LLM 文本生成 |
+| ReviewerAgent | 审查内容质量 | LLM 格式校验 |
+| CompanySummarizerAgent | 生成公司工作经历 | LLM 信息整合 |
+| DefaultCommitClassifier | Commit 模块分类 | 关键词匹配（零成本） |
+| BulletGeneratorAgent | 生成简历 bullets | LLM 受控表达 |
+
+### AI 能力说明
+
+1. **文本生成与优化**: LLM 根据 commits 生成符合格式要求的周报和简历内容
+2. **格式校验与修正**: Reviewer Agent 自动检测并修正格式问题
+3. **信息提取与整合**: 从多个项目中提取关键信息，生成公司工作经历
+4. **模块化分类**: 基于关键词的 commit 分类，无需 LLM 调用
+5. **循环优化**: Generator → Reviewer 循环迭代，持续改进内容质量
 
 ## 架构
 
@@ -166,6 +208,8 @@ docker rm -f report-generator       # 删除
 
 | 版本 | 内容 |
 |------|------|
+| V0.7.2 | 公司工作经历生成 + 简历/周报优化 |
+| V0.7 | 简历生成系统（基于 Git commits 自动生成） |
 | V0.6 | LangGraph Agent 工作流 + LangSmith 集成 |
 | V0.5 | 摘要生成优化 |
 | V0.4 | Task 聚合（高层任务抽象） |
