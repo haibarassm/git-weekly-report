@@ -6,6 +6,7 @@ from .super_agent import SuperAgent
 from .project_summarizer import ProjectSummarizerAgent, ProjectSummary
 from .bullet_generator import BulletGeneratorAgent
 from .document_analyzer import DocumentAnalyzerAgent
+from .company_summarizer import CompanySummarizerAgent
 
 __all__ = [
     'BaseAgent',
@@ -16,4 +17,5 @@ __all__ = [
     'ProjectSummary',
     'BulletGeneratorAgent',
     'DocumentAnalyzerAgent',
+    'CompanySummarizerAgent',
 ]

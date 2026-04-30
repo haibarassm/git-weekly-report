@@ -61,6 +61,31 @@ class Config:
         """获取项目基础目录"""
         return self._config.get("base_dir", ".")
 
+    def get_project_dirs(self) -> list:
+        """获取所有项目目录列表（支持多目录扫描）"""
+        # 如果配置了 project_dirs，直接使用
+        project_dirs = self._config.get("project_dirs", [])
+        if project_dirs:
+            return project_dirs
+
+        # 否则使用 base_dir
+        base_dir = self.get_base_dir()
+        if base_dir and base_dir != ".":
+            # 自动添加常见的子目录
+            dirs = [base_dir]
+            base_path = Path(base_dir)
+
+            # 检查常见的子目录
+            common_subdirs = ["project", "projects", "极客时间"]
+            for subdir in common_subdirs:
+                subdir_path = base_path / subdir
+                if subdir_path.exists():
+                    dirs.append(str(subdir_path))
+
+            return dirs
+
+        return ["."]
+
     @property
     def base_dir(self) -> str:
         return self.get_base_dir()
@@ -68,6 +93,40 @@ class Config:
     def get_author(self) -> str:
         """获取作者信息（用于筛选提交记录）"""
         return self._config.get("author", "")
+
+    def get_author_by_platform(self, platform: str) -> str:
+        """根据 Git 平台获取对应的作者信息"""
+        platform = platform.lower()
+        platform_key = f"{platform}_author"
+        return self._config.get(platform_key, "")
+
+    def get_authors(self) -> list:
+        """获取所有作者列表（支持多邮箱/用户名）"""
+        author = self._config.get("author", "")
+        if not author:
+            return []
+
+        # 支持多种格式：
+        # 1. 逗号分隔： "user1@example.com, user2@gmail.com"
+        # 2. authors 数组
+        authors_config = self._config.get("authors", [])
+        if authors_config:
+            return authors_config
+
+        # 从 author 字段解析（支持逗号或分号分隔）
+        import re
+        # 匹配邮箱格式
+        emails = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', author)
+        if emails:
+            return emails
+
+        # 如果没有邮箱，按分隔符分割
+        for sep in [',', ';', '，', '；']:
+            if sep in author:
+                return [a.strip() for a in author.split(sep) if a.strip()]
+
+        # 单个作者
+        return [author] if author else []
 
     def get_langsmith_config(self) -> Dict[str, Any]:
         """获取 LangSmith 配置（用于 LangChain 可观测性）"""

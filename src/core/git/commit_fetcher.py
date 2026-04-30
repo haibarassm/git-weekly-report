@@ -1,18 +1,7 @@
 """Commit 获取器 - 兼容周报（指定天数）和简历（全量）"""
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict
 from git import Repo
-from dataclasses import dataclass
-
-
-@dataclass
-class CommitInfo:
-    """Commit 信息"""
-    hash: str
-    author: str
-    date: datetime
-    message: str
-    files: List[str]
 
 
 class CommitFetcher:
@@ -25,7 +14,7 @@ class CommitFetcher:
         author: str,
         days: Optional[int] = None,
         since: Optional[datetime] = None,
-    ) -> List[CommitInfo]:
+    ) -> List[Dict]:
         """获取 commits
 
         Args:
@@ -36,7 +25,7 @@ class CommitFetcher:
             since: 起始时间（可选，优先级高于 days）
 
         Returns:
-            CommitInfo 列表
+            字典列表，每个字典包含 hash, author, date, message, files
 
         使用示例:
             # 周报场景：获取最近 7 天
@@ -60,12 +49,12 @@ class CommitFetcher:
 
         commits = []
         for commit in repo.iter_commits(branch, **log_kwargs):
-            commits.append(CommitInfo(
-                hash=commit.hexsha[:7],
-                author=commit.author.name,
-                date=commit.committed_datetime,
-                message=commit.message.strip(),
-                files=list(commit.stats.files.keys())
-            ))
+            commits.append({
+                "hash": commit.hexsha[:7],
+                "author": str(commit.author.name),
+                "date": commit.committed_datetime,
+                "message": commit.message.strip(),
+                "files": list(commit.stats.files.keys())
+            })
 
         return commits

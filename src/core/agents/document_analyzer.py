@@ -86,33 +86,42 @@ class DocumentAnalyzerAgent:
         parts = []
 
         for filename, content in documents.items():
-            # 移除 "Claude Code guidance" 部分
             processed_content = content
 
-            # 查找并移除 "This file provides guidance to Claude Code" 相关内容
-            claude_guidance_markers = [
+            # 移除文档开头不需要的部分（Claude Code guidance、生态系统概述等）
+            skip_sections = [
                 "This file provides guidance to Claude Code",
                 "# CLAUDE.md",
                 "This file provides guidance",
-                "## Project Ecosystem Overview"
+                "## Project Ecosystem Overview",
+                "### Project Descriptions"
             ]
 
-            for marker in claude_guidance_markers:
-                if marker in processed_content:
-                    # 找到这个标记的位置
-                    idx = processed_content.find(marker)
-                    if idx == 0:  # 如果在开头，跳过整个这一段
-                        # 查找下一个主要标题
-                        next_marker = processed_content.find("\n## ", idx + 10)
-                        if next_marker > 0:
-                            processed_content = processed_content[next_marker:]
-                        else:
-                            # 没找到其他标题，保留全部
-                            pass
-                    break
+            # 查找需要跳过的起始标记
+            skip_start_idx = -1
+            for marker in skip_sections:
+                idx = processed_content.find(marker)
+                if idx >= 0 and (skip_start_idx == -1 or idx < skip_start_idx):
+                    skip_start_idx = idx
+
+            # 如果找到需要跳过的部分，跳过到下一个主要标题
+            if skip_start_idx >= 0:
+                # 查找 "## Project Overview" 或其他主要标题
+                next_section_markers = [
+                    "\n## Project Overview",
+                    "\n## 项目概述",
+                    "\n## Overview",
+                    "\n# Project"
+                ]
+                for section_marker in next_section_markers:
+                    next_idx = processed_content.find(section_marker, skip_start_idx)
+                    if next_idx > 0:
+                        processed_content = processed_content[next_idx:]
+                        logger.info(f"跳过文档开头部分，从 '{section_marker.strip()}' 开始")
+                        break
 
             # 限制单文档长度
-            max_doc_length = 5000
+            max_doc_length = 8000
             if len(processed_content) > max_doc_length:
                 processed_content = processed_content[:max_doc_length] + "\n...(内容已截断)"
 
@@ -127,6 +136,15 @@ class DocumentAnalyzerAgent:
     def _parse_response(self, response: str) -> Dict:
         """解析 LLM 响应"""
         logger = logging.getLogger(__name__)
+
+        # 处理 LangChain 流式响应格式 [{"type":"text","text":"..."}]
+        if response.strip().startswith('['):
+            try:
+                chunks = json.loads(response)
+                response = ''.join(chunk.get('text', '') for chunk in chunks)
+                logger.info(f"从 LangChain 格式提取文本，长度: {len(response)}")
+            except json.JSONDecodeError:
+                pass  # 不是流式格式，继续处理
 
         # 清理响应
         response = response.strip()

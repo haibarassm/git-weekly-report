@@ -56,9 +56,9 @@ docker build -t ${IMAGE_NAME} -t ${LATEST_IMAGE_NAME} .
 echo ""
 echo "启动 Docker 容器..."
 
-# Windows 路径转换
-WIN_CONFIG_PATH=$(echo "$NAPS_CONFIG_DIR" | sed 's|/|\\|g')
-WIN_PROJECTS_PATH=$(echo "$NAPS_PROJECTS_DIR" | sed 's|/|\\|g')
+# Windows 路径转换（手动处理）
+WIN_CONFIG_PATH="C:\\Users\\sherry\\.naps"
+WIN_PROJECTS_PATH="C:\\Users\\sherry\\projects"
 WIN_OUTPUT_PATH="C:\\Users\\sherry\\project\\naps_report_generator\\output"
 
 echo "配置目录: $WIN_CONFIG_PATH"

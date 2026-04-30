@@ -8,10 +8,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from core.sources.base import ContentSource
-from .git_utils import GitUtils
-from .commit_processor import process_commits
+from src.core.git import CommitFetcher, CommitFilter, TaskClassifier, CommitSplitter, CommitAggregator, GitRepoService
 from config import config
-from llm_client import create_llm_client
+from src.core.llm.client import get_llm_client
 
 
 class GitReportSource(ContentSource):
@@ -21,7 +20,11 @@ class GitReportSource(ContentSource):
     """
 
     def __init__(self):
-        self.git_utils = GitUtils()
+        self.fetcher = CommitFetcher()
+        self.filter = CommitFilter()
+        self.classifier = TaskClassifier()
+        self.splitter = CommitSplitter()
+        self.aggregator = CommitAggregator()
         self.author = config.get_author()
 
     def fetch(self, repo_path: str, branches: list | str,
@@ -43,7 +46,7 @@ class GitReportSource(ContentSource):
         import json
 
         # 验证仓库
-        if not self.git_utils.validate_repo(repo_path):
+        if not GitRepoService.validate_repo(repo_path):
             raise ValueError(f"无效的Git仓库: {repo_path}")
 
         # 兼容单个分支字符串
@@ -53,8 +56,11 @@ class GitReportSource(ContentSource):
         # 获取所有分支的提交记录
         all_commits = []
         for branch in branches:
-            commits = self.git_utils.get_commits(
-                repo_path, branch, start_date, end_date, self.author
+            commits = self.fetcher.fetch(
+                repo_path=repo_path,
+                branch=branch,
+                author=self.author,
+                since=start_date
             )
             for commit in commits:
                 commit['branch'] = branch
@@ -79,13 +85,22 @@ class GitReportSource(ContentSource):
                 )
                 ordered_commits.extend(branch_commits)
 
-        # 使用 V0.5 处理流程
+        # 使用共享的处理流程
+        # 步骤1: 过滤
+        filtered_commits, _ = self.filter.filter_commits(ordered_commits)
+
+        # 步骤2: 分类
+        classified_commits = self.classifier.classify_commits(filtered_commits)
+
+        # 步骤3: 拆分
         llm_client = create_llm_client(config.get_llm_config())
-        processed_commits = process_commits(
-            ordered_commits,
-            llm_client=llm_client,
-            enable_v04=enable_v04
-        )
+        split_commits = self.splitter.split_commits(classified_commits, llm_client)
+
+        # 步骤4: 聚合
+        if enable_v04:
+            processed_commits = self.aggregator.aggregate(split_commits, llm_client)
+        else:
+            processed_commits = split_commits
 
         # 返回 JSON 格式
         return json.dumps(

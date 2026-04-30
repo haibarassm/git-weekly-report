@@ -2,6 +2,7 @@
 from pathlib import Path
 from typing import List, Optional
 import logging
+import json
 
 from src.core.llm.client import get_llm_client
 from .project_summarizer import ProjectSummary
@@ -53,7 +54,9 @@ class BulletGeneratorAgent:
         logger.info(f">>> [Bullet 生成] 项目: {summary.project_id}")
 
         try:
-            response = self.llm.generate(self._prompt.format(context=context))
+            # 使用 replace 避免花括号冲突
+            prompt = self._prompt.replace("{context}", context)
+            response = self.llm.generate(prompt)
             bullets = self._parse_bullets(response)
             logger.info(f">>> [Bullet 生成] 完成: {len(bullets)} 条")
             return bullets
@@ -64,6 +67,8 @@ class BulletGeneratorAgent:
     def _build_context(self, summary: ProjectSummary, claude_md: Optional[str], readme: Optional[str]) -> str:
         """构建 LLM 输入"""
         parts = [
+            f"**项目名称**: {summary.project_id}",
+            "",
             "## 项目摘要",
             f"**技术亮点**: {summary.technical_highlights}",
             f"**关键成果**:",
@@ -75,25 +80,71 @@ class BulletGeneratorAgent:
         for contribution in summary.main_contributions:
             parts.append(f"  - {contribution}")
 
-        if claude_md:
+        # 只在没有关键成果时才使用 claude.md 和 readme
+        if not summary.key_achievements and claude_md:
             parts.append("\n## 项目规范 (CLAUDE.md)")
-            parts.append(claude_md[:800])  # 限制长度
+            # 限制长度，只保留核心部分
+            claude_content = claude_md[:2000] if claude_md else ""
+            parts.append(claude_content)
 
-        if readme:
+        if not summary.key_achievements and readme:
             parts.append("\n## 项目说明 (README)")
-            parts.append(readme[:800])
+            readme_content = readme[:1000] if readme else ""
+            parts.append(readme_content)
 
         return "\n".join(parts)
 
     def _parse_bullets(self, response: str) -> List[str]:
         """解析 bullet points"""
+        logger = logging.getLogger(__name__)
+
+        # 处理 LangChain 流式响应格式 [{"type":"text","text":"..."}]
+        if response.strip().startswith('['):
+            try:
+                # 解析 JSON 数组
+                chunks = json.loads(response)
+                # 提取所有 text 字段
+                full_text = ''.join(chunk.get('text', '') for chunk in chunks)
+                response = full_text
+                logger.info(f"从 LangChain 格式提取文本，长度: {len(response)}")
+            except json.JSONDecodeError:
+                pass  # 不是流式格式，继续处理
+
         bullets = []
+        # 过滤关键词：包含这些词的行视为说明文字，不作为 bullet
+        filter_keywords = [
+            '要求', '输出格式', '示例', '注意事项', '反例', '正例',
+            '不要', '提醒', '每行一条', '以 `- ` 开头',
+            '具体任务', '高层次', '抽象', '列举', '任务名称',
+            'REFACTOR', 'FEATURE', 'FIX'  # prompt 中的示例
+        ]
+
         for line in response.split('\n'):
             line = line.strip()
-            if line.startswith(('- ', '• ', '* ')):
-                bullets.append(line[2:].strip())
+            if not line:
+                continue
+
+            # 检查是否包含过滤关键词（说明文字）
+            if any(keyword in line for keyword in filter_keywords):
+                logger.info(f"过滤说明文字: {line[:50]}")
+                continue
+
+            # 检查是否是 prompt 的标题行（如 ## xxx）
+            if line.startswith('##') or line.startswith('#'):
+                logger.info(f"过滤标题行: {line[:50]}")
+                continue
+
+            # 解析 bullet
+            if line.startswith(('- ', '• ', '* ', '-')):
+                bullet = line[2:].strip() if line[1] in [' ', '*', '•'] else line[1:].strip()
+                if bullet:
+                    bullets.append(bullet)
             elif line and line[0].isdigit() and line[1] in '.)、':
-                bullets.append(line[2:].strip())
+                bullet = line[2:].strip()
+                if bullet:
+                    bullets.append(bullet)
+
+        logger.info(f"解析到 {len(bullets)} 条 bullets")
         return bullets if bullets else []
 
     def _fallback_bullets(self, summary: ProjectSummary) -> List[str]:

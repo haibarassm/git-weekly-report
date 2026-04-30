@@ -1,6 +1,13 @@
 {
   "author": "Your Name <your.email@example.com>",
-  "base_dir": "/path/to/your/projects",
+  "github_author": "your-github-username",
+  "gitlab_author": "Your GitLab Name <your.email@company.com>",
+  "gitee_author": "your-gitee-username",
+  "base_dir": "C:\\Users\\sherry",
+  "project_dirs": [
+    "C:\\Users\\sherry\\project",
+    "C:\\Users\\sherry\\极客时间\\企业级agents\\projects"
+  ],
   "llm": {
     "provider": "ollama",
     "model": "llama3.1:8b",

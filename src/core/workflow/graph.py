@@ -159,6 +159,11 @@ class ContentGenerationWorkflow:
                 result["passed"] = True
                 result["issues"] = []
 
+            # 如果 optimized_content 为空但 passed=true，使用原始草稿
+            if not optimized and result.get("passed") and draft:
+                logger.info(f"[Reviewer] optimized_content 为空，使用原始草稿作为最终内容")
+                result["optimized_content"] = draft
+
             if _is_verbose_log():
                 logger.info(f"[Reviewer] optimized_content (前200字): {str(result.get('optimized_content', ''))[:200]}")
         except Exception as e:

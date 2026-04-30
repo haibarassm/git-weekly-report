@@ -7,16 +7,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from .git_utils import GitUtils
-from .commit_processor import process_commits
-
-# 导入 core 模块（添加项目根目录到路径）
+# 使用共享的 Git 模块
 import sys
-from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+from src.core.git import CommitFetcher, CommitFilter, TaskClassifier, CommitSplitter, CommitAggregator
 from src.core.workflow.graph import ContentGenerationWorkflow
 from src.core.llm.client import get_llm_client
 from config import config
@@ -31,7 +28,11 @@ class ReportService:
     """
 
     def __init__(self):
-        self.git_utils = GitUtils()
+        self.fetcher = CommitFetcher()
+        self.filter = CommitFilter()
+        self.classifier = TaskClassifier()
+        self.splitter = CommitSplitter()
+        self.aggregator = CommitAggregator()
         self.author = config.get_author()
         self.output_dir = Path(config.get_output_dir())
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -96,10 +97,22 @@ class ReportService:
             return []
 
         try:
+            from git import Repo
             project_path = self._resolve_project_path(project_name)
-            if not self.git_utils.validate_repo(str(project_path)):
+            if not project_path.exists():
                 return []
-            return self.git_utils.get_branches(str(project_path))
+            repo = Repo(str(project_path))
+            branches = set()
+            for head in repo.heads:
+                branches.add(head.name)
+            for ref in repo.remote().refs:
+                branch_name = ref.name.replace('origin/', '', 1)
+                if branch_name.startswith('refs/heads/'):
+                    branch_name = branch_name.replace('refs/heads/', '', 1)
+                elif branch_name.startswith('refs/tags/'):
+                    branch_name = branch_name.replace('refs/tags/', '', 1)
+                branches.add(branch_name)
+            return sorted(list(branches))
         except Exception as e:
             logger.error(f"获取分支失败: {e}")
             return []
@@ -138,9 +151,21 @@ class ReportService:
         if not all_commits:
             return f"该时间段内没有找到来自 {self.author} 的提交记录。", None
 
-        # 3. 处理 commits（传入 LLM 客户端用于 summary 生成）
+        # 3. 处理 commits（使用共享的 Git 模块）
+        # 步骤1: 过滤
+        filtered_commits, filter_stats = self.filter.filter_commits(all_commits)
+        logger.info(f">>> [过滤] 保留 {len(filtered_commits)} 条")
+
+        # 步骤2: 分类
+        classified_commits = self.classifier.classify_commits(filtered_commits)
+
+        # 步骤3: 拆分
         llm_client = get_llm_client()
-        processed_commits = process_commits(all_commits, llm_client=llm_client)
+        split_commits = self.splitter.split_commits(classified_commits, llm_client)
+
+        # 步骤4: 聚合
+        processed_commits = self.aggregator.aggregate(split_commits, llm_client)
+
         if not processed_commits:
             return "过滤后没有有效的提交记录。", None
 
@@ -190,12 +215,15 @@ class ReportService:
         all_commits = []
         for project_name, branch_list in branch_info.items():
             project_path = self._resolve_project_path(project_name)
-            if not self.git_utils.validate_repo(str(project_path)):
+            if not project_path.exists():
                 logger.warning(f"无效的Git仓库: {project_path}")
                 continue
             for branch in branch_list:
-                commits = self.git_utils.get_commits(
-                    str(project_path), branch, start_date, end_date, self.author
+                commits = self.fetcher.fetch(
+                    repo_path=str(project_path),
+                    branch=branch,
+                    author=self.author,
+                    since=start_date
                 )
                 for c in commits:
                     c['project'] = project_name
@@ -221,9 +249,137 @@ class ReportService:
 
     def _post_process(self, content: str, mode: str) -> str:
         """后处理：根据模式进行修正"""
+        # 先清理禁止的章节和引导词
+        content = self._strip_forbidden_sections(content)
+
         if mode == "simple":
             content = self._ensure_next_week_plan(content)
+            content = self._fix_format_issues(content)
         return content
+
+    def _fix_format_issues(self, content: str) -> str:
+        """修复格式问题"""
+        import re
+
+        # 1. 去掉标题后的 **
+        content = re.sub(r'^(本周工作内容|下周工作内容)\*\*\s*$', r'\1', content, flags=re.MULTILINE)
+
+        # 2. 将 1. 替换为 1、（只在工作内容区域）
+        lines = []
+        in_work_section = False
+        for line in content.split('\n'):
+            stripped = line.strip()
+
+            # 检测工作内容区域
+            if stripped.startswith('本周工作内容') or stripped.startswith('下周工作内容'):
+                in_work_section = True
+
+            # 在工作内容区域内，替换序号格式
+            if in_work_section and stripped and re.match(r'^\d+\.\s', stripped):
+                line = re.sub(r'^(\d+)\.\s+', r'\1、', line)
+
+            lines.append(line)
+
+        content = '\n'.join(lines)
+
+        # 3. 去掉方括号
+        content = re.sub(r'\[([^\]]+)\]', r'\1', content)
+
+        # 4. 修复状态格式（提测）→(已提测)
+        content = re.sub(r'\(提测\)', '(已提测)', content)
+
+        return content
+
+    def _strip_forbidden_sections(self, content: str) -> str:
+        """清理禁止的章节和引导词"""
+        lines = []
+        skip_until_empty_line = False
+
+        forbidden_prefixes = [
+            "根据提供的数据",
+            "根据给出的数据",
+            "以下是根据",
+            "我将生成",
+            "以下是",
+            "如下所示",
+            "为您生成",
+        ]
+
+        forbidden_headers = [
+            "本周总结",
+            "下周总结",
+            "总结",
+            "本周任务详细信息",
+            "下周任务详细信息",
+            "详细任务",
+            "任务详细信息",
+            "本周未发布任务",
+            "下周工作计划",  # 应该是"下周工作内容"
+            "发布状态",  # 禁止
+            "**第",  # 禁止 "**第 1 周" 这种格式
+        ]
+
+        for line in content.split('\n'):
+            stripped = line.strip()
+
+            # 检查是否是禁止的引导词
+            if any(stripped.startswith(p) for p in forbidden_prefixes):
+                continue
+
+            # 检查是否是禁止的章节标题
+            if any(stripped == h or stripped.startswith(h) for h in forbidden_headers):
+                # 跳过这一行，并跳过直到空行
+                skip_until_empty_line = True
+                continue
+
+            # 跳过"第 X 周"格式
+            if re.match(r'^\*?\*?\s*第\s*\d+\s*周', stripped):
+                skip_until_empty_line = True
+                continue
+
+            # 跳过表格行
+            if '|' in stripped and stripped.count('|') >= 2:
+                skip_until_empty_line = True
+                continue
+
+            # 跳过表格分隔符
+            if stripped.startswith('|---') or stripped.startswith('| ---'):
+                continue
+
+            # 跳过技术细节行
+            if "任务类型：" in stripped or "作用域：" in stripped or "原始 commit" in stripped:
+                skip_until_empty_line = True
+                continue
+
+            # 如果正在跳过，检查是否到达空行
+            if skip_until_empty_line:
+                if not stripped:
+                    skip_until_empty_line = False
+                continue
+
+            # 跳过无意义的符号行
+            if stripped in ['---', '***', '___']:
+                continue
+
+            lines.append(line)
+
+        # 清理后，确保以"本周工作内容"开头
+        result = '\n'.join(lines).strip()
+
+        # 如果第一行不是"本周工作内容"，尝试提取
+        if not result.startswith("本周工作内容"):
+            # 查找"本周工作内容"的位置
+            match = re.search(r'(本周工作内容[\s\S]*?)(?=下周工作内容|\Z)', result)
+            if match:
+                this_week = match.group(1).strip()
+                next_week_match = re.search(r'下周工作内容[\s\S]*', result)
+                if next_week_match:
+                    next_week = next_week_match.group(0).strip()
+                    result = f"{this_week}\n\n{next_week}"
+                else:
+                    result = this_week
+
+        return result
 
     def _ensure_next_week_plan(self, content: str) -> str:
         """确保简约模式下下周计划包含所有对接中/已提测的功能"""

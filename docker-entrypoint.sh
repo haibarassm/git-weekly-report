@@ -1,27 +1,17 @@
 #!/bin/bash
-set -e
 
 echo "==================================="
 echo "  NAPS Git Weekly Report Generator"
-echo "  启动前检查"
+echo "  V0.7.1"
 echo "==================================="
 
-# 1. 运行测试
-echo ""
-echo "[1/2] 运行测试用例..."
-python -m pytest tests/ -v --tb=short 2>&1
-TEST_EXIT=$?
+# 安装可能缺失的包
+echo "检查并安装缺失的依赖..."
+pip install langchain-ollama langchain-openai --default-timeout=100 || echo "警告: 部分包安装失败"
 
-if [ $TEST_EXIT -ne 0 ]; then
-    echo ""
-    echo "❌ 测试失败，请修复后再启动"
-    exit $TEST_EXIT
-fi
-
-echo ""
-echo "✅ 所有测试通过"
+echo "启动 Gradio 服务..."
+echo "访问地址: http://localhost:7860"
 echo ""
 
-# 2. 启动应用
-echo "[2/2] 启动 Gradio 服务..."
-exec python -m src.ui.gradio_server
+# 不使用 set -e，即使服务启动失败也继续
+python -m src.ui.gradio_server

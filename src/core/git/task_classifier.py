@@ -27,6 +27,13 @@ class CommitFilter:
     FILTER_PATTERNS = ["Merge branch", "test"]
     MIN_MESSAGE_LENGTH = 5
 
+    # 简历场景额外过滤的低质量 commit
+    RESUME_INVALID_PATTERNS = [
+        "优化代码", "修复bug", "修改", "update", "fix bug",
+        "merge branch", "merge pull", "合并", "no message",
+        "init", "initial commit", "update readme", "update .gitignore"
+    ]
+
     @classmethod
     def should_filter(cls, commit_message: str) -> tuple[bool, str]:
         """判断 commit 是否应该被过滤"""
@@ -38,6 +45,14 @@ class CommitFilter:
         if len(stripped) < cls.MIN_MESSAGE_LENGTH:
             return True, f"长度<5"
         return False, ""
+
+    @classmethod
+    def _is_low_quality(cls, commit_message: str) -> bool:
+        """判断是否是低质量 commit（简历场景专用）"""
+        msg_lower = commit_message.lower().strip()
+        if len(msg_lower) < 8:
+            return True
+        return any(p in msg_lower for p in cls.RESUME_INVALID_PATTERNS)
 
     @classmethod
     def filter_commits(cls, commits: List[Dict]) -> tuple[List[Dict], Dict[str, int]]:
@@ -57,6 +72,34 @@ class CommitFilter:
                 filtered.append(commit)
 
         return filtered, filter_stats
+
+    @classmethod
+    def filter_commits_for_resume(cls, commits: List[Dict]) -> tuple[List[Dict], Dict[str, int]]:
+        """简历场景专用过滤（更严格）
+
+        在常规过滤基础上，额外过滤低质量 commit。
+        周报场景不需要这些过滤（周报需要所有提交）。
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # 先走常规过滤
+        filtered, stats = cls.filter_commits(commits)
+
+        # 再过滤低质量
+        result = []
+        low_quality_count = 0
+        for commit in filtered:
+            if cls._is_low_quality(commit['message']):
+                low_quality_count += 1
+            else:
+                result.append(commit)
+
+        if low_quality_count > 0:
+            stats["low_quality"] = low_quality_count
+            logger.info(f"  [简历过滤] 额外过滤 {low_quality_count} 条低质量 commit")
+
+        return result, stats
 
 
 class TaskClassifier:

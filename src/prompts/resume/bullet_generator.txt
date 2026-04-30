@@ -1,35 +1,63 @@
-你是一个专业的简历优化专家。根据以下项目摘要，生成简历 bullet points。
+你是一个专业的简历优化专家。根据以下项目信息，生成简历 bullet points。
 
 {context}
 
-## 要求
+## 任务要求
 
-1. **强动词开头**: Built / Designed / Implemented / Developed / Optimized / Architected / Led / Refactored / Integrated
-2. **突出技术栈**: 明确使用的技术（Python, Go, PostgreSQL 等）
-3. **强调成果**: 尽可能量化（提升 X%、节省 Y 小时、处理 Z 数据量）
-4. **简洁有力**: 每条不超过 25 字
-5. **基于事实**: 主要从项目摘要、规范和文档中提取
-6. **生成数量**: 3~5 条
+基于以上项目信息，生成 4~6 条简历 bullet points。
+
+【表达增强规则（必须遵守）】
+
+1. 每条必须体现"个人动作"，使用以下动词开头：
+   - 开发 / 实现 / 对接 / 优化 / 处理 / 完成 / 构建 / 支持
+
+2. 禁止使用"负责xxx流程"这种描述：
+   ❌ 负责订单创建流程
+   ✅ 开发订单创建流程
+
+3. 每条尽量包含一个"具体动作 + 具体对象"：
+   示例：
+   - 对接第三方支付接口
+   - 处理退款异常场景
+   - 实现商户入驻功能
+   - 优化缓存一致性方案
+
+4. 避免纯功能描述：
+   ❌ 支付订单：订单创建
+   ✅ 支付订单：开发订单创建流程
+
+5. 禁止使用夸大词汇：
+   ❌ 设计并实现xxx架构
+   ✅ 实现xxx机制/功能
+   ❌ 构建xxx系统
+   ✅ 开发xxx功能
+
+6. **⚠️ 绝对禁止编造数据和夸大功能范围**：
+   - ❌ 不允许出现"17+支付渠道"、"多个CDN节点"、"20+项目"等数字
+   - ❌ 不允许使用"高并发"、"大规模"、"全方位"等模糊夸大词
+   - ✅ 只使用真实提交中出现过的具体功能名称
+
+【内容要求】
+
+- 从"关键成果"和"主要贡献"中提取，不要添加其他内容
+- 明确使用的技术名称（但不要工具类）
+- 每条不超过 30 字
+- 使用中文
+- **不要包含工具类的基础使用（如"使用 Hutool"、"使用 Lombok"、"使用 Druid"）**
 
 ## 输出格式
 
-每行一条，以 `- ` 开头：
+只输出 bullet points，每行一条，以 `- ` 开头。不要添加任何其他说明文字。
 
-- Built xxx using YYY
-- Designed xxx system
-- Optimized xxx, resulting in yyy
-- Implemented xxx with YYY
-- Led xxx team to achieve yyy
+示例：
+- 实现分库分表功能，支撑业务增长
+- 对接第三方支付接口，处理多渠道回调
+- 开发内容审核模块，实现自动质量控制
+- 优化缓存一致性方案，提升数据准确性
 
-## 示例
+## 注意事项
 
-**输入**: 项目使用 Python + LangGraph，实现多 Agent 工作流，处理 1000+ 提交，提升效率 80%
-
-**输出**:
-- Built 周报生成系统 using LangGraph 多 Agent 工作流
-- Designed 分层架构实现 Generator-Reviewer 协作
-- Optimized 提交处理流程，效率提升 80%
-- Implemented Gradio Web 界面支持实时生成
-- Integrated Docker 部署方案
-
-请开始生成：
+- 不要输出 prompt 的说明文字
+- 不要输出任务名称（如 REFACTOR、FEATURE、FIX）
+- 不要输出工具类名称（如 Hutool、Lombok、Druid）
+- 只输出 bullet points，不要添加其他内容

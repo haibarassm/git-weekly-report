@@ -1,9 +1,12 @@
-"""LLM客户端模块"""
+"""LLM客户端模块 - 使用 LangChain 组件以支持 LangSmith 追踪"""
 import os
-import requests
 import logging
 from typing import Optional
 from abc import ABC, abstractmethod
+
+from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
+from langchain_core.messages import SystemMessage, HumanMessage
 
 # 配置日志
 logging.basicConfig(
@@ -37,7 +40,7 @@ class BaseLLMClient(ABC):
 
 
 class OllamaClient(BaseLLMClient):
-    """Ollama客户端"""
+    """Ollama客户端 - 使用 LangChain ChatOllama"""
 
     def __init__(self, base_url: str, model: str, timeout: int = 120):
         """
@@ -51,6 +54,14 @@ class OllamaClient(BaseLLMClient):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
+
+        # 使用 LangChain 的 ChatOllama，自动支持 LangSmith 追踪
+        self.llm = ChatOllama(
+            model=model,
+            base_url=base_url,
+            temperature=0.7,
+            timeout=timeout,
+        )
         logger.info(f"初始化Ollama客户端: {self.base_url}, 模型: {self.model}")
 
     def generate(self, user_prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
@@ -68,52 +79,23 @@ class OllamaClient(BaseLLMClient):
         messages = []
 
         if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
+            messages.append(SystemMessage(content=system_prompt))
 
-        messages.append({"role": "user", "content": user_prompt})
-
-        payload = {
-            "model": self.model,
-            "messages": messages,
-            "max_tokens": kwargs.get("max_tokens", 4000),
-            "temperature": kwargs.get("temperature", 0.7),
-            "stream": False
-        }
-
-        logger.info(f"发送请求到Ollama: {self.base_url}/v1/chat/completions")
-        logger.info(f"使用模型: {self.model}")
+        messages.append(HumanMessage(content=user_prompt))
 
         try:
-            response = requests.post(
-                f"{self.base_url}/v1/chat/completions",
-                json=payload,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-            response_data = response.json()
-            result = response_data["choices"][0]["message"]["content"]
-            logger.info("Ollama请求成功")
-            return result
-        except requests.exceptions.Timeout:
-            error_msg = f"Ollama API请求超时（{self.timeout}秒）。请检查模型是否已下载，或增加config.json中的timeout值。"
+            # LangChain 会自动追踪到 LangSmith
+            response = self.llm.invoke(messages)
+            logger.info(f"Ollama请求成功，返回 {len(response.content)} 字符")
+            return response.content
+        except Exception as e:
+            error_msg = f"Ollama API请求失败: {str(e)}\n\n请确保：\n1. Ollama正在运行\n2. API地址配置正确\n3. 模型已下载（运行: ollama pull {self.model}）"
             logger.error(error_msg)
-            raise RuntimeError(error_msg)
-        except requests.exceptions.ConnectionError as e:
-            error_msg = f"无法连接到Ollama服务（{self.base_url}）。\n\n请确保：\n1. Ollama正在运行\n2. API地址配置正确\n3. 模型已下载（运行: ollama pull {self.model}）"
-            logger.error(f"{error_msg}\n详细错误: {e}")
-            raise RuntimeError(error_msg)
-        except requests.RequestException as e:
-            error_msg = f"Ollama API请求失败: {str(e)}"
-            logger.error(error_msg)
-            raise RuntimeError(error_msg)
-        except (KeyError, IndexError) as e:
-            error_msg = f"Ollama响应格式错误，请检查模型版本是否支持"
-            logger.error(f"{error_msg}\n详细错误: {e}")
             raise RuntimeError(error_msg)
 
 
 class DeepSeekClient(BaseLLMClient):
-    """DeepSeek客户端（兼容OpenAI API）"""
+    """DeepSeek客户端 - 使用 LangChain ChatOpenAI（兼容 OpenAI API）"""
 
     def __init__(
         self, api_key: str, base_url: str = "https://api.deepseek.com", model: str = "deepseek-chat", timeout: int = 120
@@ -132,6 +114,16 @@ class DeepSeekClient(BaseLLMClient):
         self.model = model
         self.timeout = timeout
 
+        # 使用 LangChain 的 ChatOpenAI，自动支持 LangSmith 追踪
+        self.llm = ChatOpenAI(
+            model=model,
+            api_key=api_key,
+            base_url=base_url,
+            temperature=0.7,
+            timeout=timeout,
+        )
+        logger.info(f"初始化DeepSeek客户端: {self.base_url}, 模型: {self.model}")
+
     def generate(self, user_prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
         """
         生成文本
@@ -144,35 +136,25 @@ class DeepSeekClient(BaseLLMClient):
         Returns:
             生成的文本
         """
-        url = f"{self.base_url}/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
         messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": user_prompt})
 
-        data = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": kwargs.get("temperature", 0.7),
-            "max_tokens": kwargs.get("max_tokens", 2000),
-        }
+        if system_prompt:
+            messages.append(SystemMessage(content=system_prompt))
+
+        messages.append(HumanMessage(content=user_prompt))
 
         try:
-            response = requests.post(url, json=data, headers=headers, timeout=self.timeout)
-            response.raise_for_status()
-            result = response.json()
-            return result["choices"][0]["message"]["content"]
-        except requests.RequestException as e:
-            raise RuntimeError(f"DeepSeek API请求失败: {e}")
+            # LangChain 会自动追踪到 LangSmith
+            response = self.llm.invoke(messages)
+            return response.content
+        except Exception as e:
+            error_msg = f"DeepSeek API请求失败: {e}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
 
 
 class OpenAIClient(BaseLLMClient):
-    """OpenAI客户端"""
+    """OpenAI客户端 - 使用 LangChain ChatOpenAI"""
 
     def __init__(
         self, api_key: str, base_url: str = "https://api.openai.com/v1", model: str = "gpt-4o", timeout: int = 120
@@ -191,6 +173,16 @@ class OpenAIClient(BaseLLMClient):
         self.model = model
         self.timeout = timeout
 
+        # 使用 LangChain 的 ChatOpenAI，自动支持 LangSmith 追踪
+        self.llm = ChatOpenAI(
+            model=model,
+            api_key=api_key,
+            base_url=base_url,
+            temperature=0.7,
+            timeout=timeout,
+        )
+        logger.info(f"初始化OpenAI客户端: {self.base_url}, 模型: {self.model}")
+
     def generate(self, user_prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
         """
         生成文本
@@ -203,31 +195,21 @@ class OpenAIClient(BaseLLMClient):
         Returns:
             生成的文本
         """
-        url = f"{self.base_url}/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
         messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": user_prompt})
 
-        data = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": kwargs.get("temperature", 0.7),
-            "max_tokens": kwargs.get("max_tokens", 2000),
-        }
+        if system_prompt:
+            messages.append(SystemMessage(content=system_prompt))
+
+        messages.append(HumanMessage(content=user_prompt))
 
         try:
-            response = requests.post(url, json=data, headers=headers, timeout=self.timeout)
-            response.raise_for_status()
-            result = response.json()
-            return result["choices"][0]["message"]["content"]
-        except requests.RequestException as e:
-            raise RuntimeError(f"OpenAI API请求失败: {e}")
+            # LangChain 会自动追踪到 LangSmith
+            response = self.llm.invoke(messages)
+            return response.content
+        except Exception as e:
+            error_msg = f"OpenAI API请求失败: {e}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
 
 
 def create_llm_client(config: dict) -> BaseLLMClient:

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\sherry\project\naps_report_generator\src\ui\main.py", line 14, in <module>
+    from ui.tabs.resume_manage_tab import create_resume_manage_tab
+  File "C:\Users\sherry\project\naps_report_generator\src\ui\tabs\resume_manage_tab.py", line 294
+    file_key = f"{orig_name} ({counter)}"
+                                         ^
+SyntaxError: f-string: unmatched ')'

@@ -28,7 +28,18 @@
       "Bash(.venv/Scripts/python.exe -m unittest tests.test_workflow_integration -v)",
       "Bash(.venv/Scripts/python.exe -m unittest tests.test_core_framework.TestWorkflowState.test_add_message -v)",
       "Bash(.venv/Scripts/python.exe -m unittest discover tests -v)",
-      "Bash(.venv/Scripts/python.exe -m unittest tests.test_commit_processor.TestTaskAggregator.test_filter_release_words -v)"
+      "Bash(.venv/Scripts/python.exe -m unittest tests.test_commit_processor.TestTaskAggregator.test_filter_release_words -v)",
+      "Bash(python -m py_compile src/core/git/commit_fetcher.py)",
+      "Bash(python -m py_compile src/core/git/task_classifier.py)",
+      "Bash(python -m py_compile src/integrations/git_report/git_utils.py)",
+      "Bash(python -m py_compile src/integrations/git_report/report_service.py)",
+      "Bash(.venv/Scripts/python.exe -m py_compile src/integrations/resume/resume_service.py)",
+      "Bash(.venv/Scripts/python.exe -m src.ui.main)",
+      "Bash(.venv/Scripts/python.exe -c \":*)",
+      "Bash(.venv/Scripts/python.exe -m py_compile src/core/git/default_classifier.py)",
+      "Bash(ls -lt C:Userssherryprojectnaps_report_generatoroutputs/*.docx)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/test_document_builder.py tests/test_font_and_time.py -v --tb=short)",
+      "Bash(.venv/Scripts/python.exe check_work_experience.py)"
     ]
   },
   "enableAllProjectMcpServers": true,

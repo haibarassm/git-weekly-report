@@ -12,6 +12,7 @@ from config import config
 from ui.tabs.weekly_report_tab import create_weekly_report_tab
 from ui.tabs.resume_generate_tab import create_resume_generate_tab
 from ui.tabs.resume_manage_tab import create_resume_manage_tab
+from ui.tabs.company_manage_tab import create_company_manage_tab
 
 
 def _setup_langsmith():
@@ -51,6 +52,9 @@ def launch():
 
             with gr.Tab("⚙️ 项目管理"):
                 create_resume_manage_tab(config)
+
+            with gr.Tab("🏢 公司管理"):
+                create_company_manage_tab()
 
     app.launch(
         server_name="0.0.0.0",
