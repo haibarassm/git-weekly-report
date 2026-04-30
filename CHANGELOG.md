@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [v0.7.2] - 2026-04-30
+
+### ✨ 新功能
+
+- feat: 公司工作经历生成（CompanySummarizerAgent）
+- feat: 项目名称前缀隔离（防止不同项目的模块混淆）
+- feat: 公司管理 Tab（公司信息增删改查）
+
+### 🐛 问题修复
+
+- fix: 简历模块混淆问题（添加项目名称前缀【项目名】）
+- fix: 周报状态判定错误（近7天默认已提测/对接中）
+- fix: 周报内容过长（添加20字简洁性要求）
+- fix: 周报夸大词问题（禁止"多种"、"多个"、"全面"）
+
+### 📝 提示词优化
+
+- prompts/company/work_experience_generator.txt（50字简洁性）
+- prompts/resume/resume_module_generator.txt（项目前缀要求）
+- prompts/weekly_report/generator_simple.txt（状态判定+简洁性）
+- prompts/weekly_report/reviewer_strict.txt（新增简洁性检查规则）
+
+### ♻️ 代码重构
+
+- refactor: fallback 策略添加项目标识
+- refactor: 模块分类器（DefaultCommitClassifier）
+- refactor: 模块聚合器（ModuleAggregator）
+
+---
+
 ## [v0.7] - 2026-04-10
 
 ### ✨ 新功能
