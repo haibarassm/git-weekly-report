@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## [v0.7.4] - 2026-06-25
+
+### ✨ 新功能
+
+- feat: **日报生成模块**——新增「📅 日报」Tab，复用周报整条管线，按 `mode="daily"` 切换日报专属提示词
+- feat: 日报专属规则（区别于周报）：**无 `(对接中)(已提测)(已发布)` 状态枚举**、**不限条数**、**同模块 commits 合并成一条**
+- feat: `ReportService._group_by_scope`——进 workflow 前按 scope 合并同模块（**日报 + 周报共用**），过滤 merge/git 噪声，根治同模块拆行、多分支内容丢失
+
+### 🐛 问题修复
+
+- fix: 时区——容器跑 UTC 导致 `days=1` 把当天上午提交切掉；时间窗口和文件名日期改用东八区 `CN_TZ`
+- fix: merge commit 噪声——`should_filter` 用 `startswith("Merge ")` 挡掉所有 merge（Merge branch / pull request / remote-tracking branch）
+- fix: `super_agent` 在 reviewer 返回 dict 型 issues 时崩溃 → join 加 str 兜底（周报也受益）
+
+### 📝 提示词
+
+- 新增 `src/prompts/daily_report/`：generator（带 few-shot 示例，禁止照搬技术细节/禁止同名模块拆行）、reviewer（放松审查，不限条数/字数）
+
+> 周报逻辑（状态枚举、下周计划）保持不变。
+
 ## [v0.7.3] - 2026-06-25
 
 ### ✨ 新功能
