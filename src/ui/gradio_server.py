@@ -68,6 +68,7 @@ class ReportAppV06:
     def create_ui(self):
         """创建 Gradio 界面"""
         from ui.tabs.resume_generate_tab import create_resume_generate_tab
+        from ui.tabs.daily_report_tab import create_daily_report_tab
         service = self.service
 
         with gr.Blocks(title="NAPS 生成工具", theme=gr.themes.Base()) as app:
@@ -79,6 +80,8 @@ class ReportAppV06:
                     (current_project, current_branches, add_btn, selected_branches,
                      selected_count, days, mode, refresh_btn, clear_btn,
                      generate_btn, output, download_file) = self._build_weekly_tab(service)
+                with gr.Tab("📅 日报"):
+                    create_daily_report_tab(config)
                 with gr.Tab("📄 简历生成"):
                     create_resume_generate_tab(config)
 

@@ -3,7 +3,7 @@ import json
 import re
 import os
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +19,10 @@ from src.core.llm.client import get_llm_client
 from config import config
 
 logger = logging.getLogger(__name__)
+
+# 东八区：容器跑 UTC，但 commit 时间戳和用户都在 +0800；
+# 时间窗口必须按东八区算，否则 days=1 会把当天上午的提交切掉
+CN_TZ = timezone(timedelta(hours=8))
 
 
 class ReportService:
@@ -144,7 +148,7 @@ class ReportService:
         branch_info = self._parse_branches(selected_branches)
 
         # 2. 收集 commits
-        end_date = datetime.now()
+        end_date = datetime.now(CN_TZ)  # 东八区，对齐 commit 时间戳
         start_date = end_date - timedelta(days=days)
         all_commits = self._collect_commits(branch_info, start_date, end_date)
 
@@ -166,11 +170,19 @@ class ReportService:
         # 步骤4: 聚合
         processed_commits = self.aggregator.aggregate(split_commits, llm_client)
 
+        # 按 scope 合并同模块（日报 + 周报简约共用），防止同模块拆行、多分支内容丢失
+        if mode in ("daily", "simple"):
+            processed_commits = self._group_by_scope(processed_commits)
+
         if not processed_commits:
             return "过滤后没有有效的提交记录。", None
 
         # 4. 生成报告
-        input_content = json.dumps(processed_commits, ensure_ascii=False, indent=2)
+        if mode in ("daily", "simple"):
+            period = "今日" if mode == "daily" else "本周"
+            input_content = f"{period}共有 {len(processed_commits)} 个模块的提交，请确保每个模块的工作都覆盖到，不要省略任何一个模块：\n" + json.dumps(processed_commits, ensure_ascii=False, indent=2)
+        else:
+            input_content = json.dumps(processed_commits, ensure_ascii=False, indent=2)
         report_content = self.workflow.run(input_text=input_content, mode=mode)
 
         if not report_content:
@@ -231,6 +243,38 @@ class ReportService:
                 all_commits.extend(commits)
         return all_commits
 
+    def _group_by_scope(self, items: list) -> list:
+        """日报专用：按 scope(模块) 合并，每个模块一条；过滤「合并分支」类噪声。
+
+        aggregator 输出可能含多个相同 scope 的项（如 3 条 card），日报要求每个模块一行，
+        交给 LLM 合并不可靠（会拆行/改名），所以在进 workflow 前用代码按 scope 归并：
+        - scope 作为模块名原样使用（carusell / caruselltpay 不会被混成一个）
+        - 同 scope 的 tasks 合并到一起
+        - 过滤掉「合并远程跟踪分支」这类 merge 噪声 task；全被过滤的 scope 丢弃
+        """
+        merge_pat = re.compile(r"合并.*(分支|remote|tracking|origin)|merge\s+branch|更新本地分支|抓取远程|拉取.*代码|更新分支.*历史|同步.*远程", re.IGNORECASE)
+        # default / 空 scope 通常是 merge、chore、git 操作噪声，整块丢弃
+        noise_scopes = {"default", ""}
+        grouped: dict = {}
+        order: list = []
+        for it in items:
+            scope = (it.get("scope") or it.get("module") or "").strip()
+            if scope in noise_scopes:
+                continue
+            tasks = [str(t) for t in (it.get("tasks") or []) if not merge_pat.search(str(t))]
+            if scope not in grouped:
+                grouped[scope] = {"type": it.get("type", ""), "scope": scope, "tasks": []}
+                order.append(scope)
+            grouped[scope]["tasks"].extend(tasks)
+        result = []
+        for s in order:
+            g = grouped[s]
+            if not g["tasks"]:
+                continue
+            g["task_count"] = len(g["tasks"])
+            result.append(g)
+        return result
+
     def _strip_json_wrapper(self, content: str) -> str:
         """安全网：如果内容是 reviewer JSON，提取 optimized_content"""
         stripped = content.strip()
@@ -251,6 +295,10 @@ class ReportService:
         """后处理：根据模式进行修正"""
         # 先清理禁止的章节和引导词
         content = self._strip_forbidden_sections(content)
+
+        # 日报不做周报专属后处理（状态格式、下周计划等），清理后直接返回
+        if mode == "daily":
+            return content
 
         if mode == "simple":
             content = self._ensure_next_week_plan(content)
@@ -432,11 +480,16 @@ class ReportService:
 
     def _save_report(self, content: str, mode: str) -> Path:
         """保存报告到文件"""
-        date_str = datetime.now().strftime("%Y%m%d")
-        mode_suffix = f"_{mode}" if mode != "simple" else ""
-        filename = f"周报_{date_str}{mode_suffix}.md"
+        date_str = datetime.now(CN_TZ).strftime("%Y%m%d")  # 东八区日期
+        if mode == "daily":
+            filename = f"日报_{date_str}.md"
+            report_title = "Git 日报"
+        else:
+            mode_suffix = f"_{mode}" if mode != "simple" else ""
+            filename = f"周报_{date_str}{mode_suffix}.md"
+            report_title = "Git 周报"
 
-        metadata = f"""# Git 周报
+        metadata = f"""# {report_title}
 
 **模式**: {mode}
 **生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}

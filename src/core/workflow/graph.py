@@ -76,6 +76,10 @@ class ContentGenerationWorkflow:
         if mode == "professional":
             system_prompt = self.generator._read_prompt("weekly_report/generator_professional.txt")
             user_prompt = f"请根据以下结构化的任务数据生成项目经历汇报：\n\n{input_text}"
+        elif mode == "daily":
+            system_prompt = self.generator._read_prompt("daily_report/generator_simple.txt")
+            user_prompt_template = self.generator._read_prompt("daily_report/generator_simple_user.txt")
+            user_prompt = user_prompt_template.replace("{commits}", input_text)
         else:
             system_prompt = self.generator._read_prompt("weekly_report/generator_simple.txt")
             user_prompt_template = self.generator._read_prompt("weekly_report/generator_simple_user.txt")
@@ -106,7 +110,7 @@ class ContentGenerationWorkflow:
 
         # 获取上一轮 reviewer 的问题
         if state.review_issues:
-            feedback_parts.append(f"审查发现的问题: {'; '.join(state.review_issues)}")
+            feedback_parts.append(f"审查发现的问题: {'; '.join(str(i) for i in state.review_issues)}")
 
         # 获取上一轮 super_agent 的原因
         for msg in reversed(state.messages):
@@ -136,7 +140,10 @@ class ContentGenerationWorkflow:
             state.add_message("reviewer", json.dumps(result, ensure_ascii=False))
             return state
 
-        template_path = self.reviewer.PROMPTS_DIR / "reviewer_strict.txt"
+        if mode == "daily":
+            template_path = self.generator.PROMPTS_DIR / "daily_report" / "reviewer.txt"
+        else:
+            template_path = self.reviewer.PROMPTS_DIR / "reviewer_strict.txt"
         if template_path.exists():
             with open(template_path, "r", encoding="utf-8") as f:
                 template = f.read()
@@ -221,7 +228,7 @@ class ContentGenerationWorkflow:
             if not state.review_passed and iteration < self.max_iteration:
                 issues = state.review_issues
                 decision = "generate"
-                reason = f"reviewer_not_passed: {'; '.join(issues) if issues else 'unknown'}"
+                reason = f"reviewer_not_passed: {'; '.join(str(i) for i in issues) if issues else 'unknown'}"
                 final_output = None
                 if _is_verbose_log():
                     logger.info(f"[SuperAgent] reviewer 未通过，触发重新生成: {issues}")

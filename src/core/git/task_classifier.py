@@ -37,11 +37,13 @@ class CommitFilter:
     @classmethod
     def should_filter(cls, commit_message: str) -> tuple[bool, str]:
         """判断 commit 是否应该被过滤"""
-        if "Merge branch" in commit_message:
-            return True, "Merge branch"
+        stripped = commit_message.strip()
+        # 各类 merge commit：Merge branch / Merge pull request / Merge remote-tracking branch / Merge tag ...
+        # 这些是集成提交、不是实际工作，周报日报都应过滤
+        if stripped.startswith("Merge "):
+            return True, "Merge commit"
         if "test" in commit_message:
             return True, "包含test"
-        stripped = commit_message.strip()
         if len(stripped) < cls.MIN_MESSAGE_LENGTH:
             return True, f"长度<5"
         return False, ""
