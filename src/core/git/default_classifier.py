@@ -42,9 +42,9 @@ class DefaultCommitClassifier:
         "auth": ["用户管理"],
 
         # 订单相关（仅用于支付订单/收单项目）
-        "order": ["支付订单", "收单"],
-        "purchase": ["支付订单", "收单"],
-        "orders": ["支付订单", "收单"],
+        "order": ["支付订单", "收单支付"],
+        "purchase": ["支付订单", "收单支付"],
+        "orders": ["支付订单", "收单支付"],
 
         # 支付相关（区分不同项目）
         "pay": "skip",  # 太通用，跳过
@@ -70,8 +70,8 @@ class DefaultCommitClassifier:
         "引流": ["广告位配置"],
 
         # 投诉相关
-        "complaint": ["投诉处理"],
-        "投诉": ["投诉处理"],
+        "complaint": ["投诉"],
+        "投诉": ["投诉"],
 
         # 剧集相关
         "drama": ["剧集管理"],
@@ -101,8 +101,8 @@ class DefaultCommitClassifier:
         "对账": ["清结算"],
 
         # 收单相关
-        "acquire": ["收单"],
-        "交易": ["收单"],
+        "acquire": ["收单支付"],
+        "交易": ["收单支付"],
 
         # PPT相关
         "ppt": ["PPT生成"],

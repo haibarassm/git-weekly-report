@@ -14,7 +14,7 @@ class ModuleAggregator:
     """
 
     CONFIDENCE_THRESHOLD = 0.4
-    MIN_TASK_COUNT = 2  # 最小任务数，少于 2 个任务的模块不进入简历
+    MIN_TASK_COUNT = 1  # 简历项目可能有低频但关键的业务模块
 
     @classmethod
     def aggregate(cls, classified_results: List[Dict], modules: List[Dict] = None) -> List[Dict]:

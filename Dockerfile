@@ -8,8 +8,9 @@ RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 # 复制依赖文件
 COPY requirements.txt .
 
-# 安装Python依赖
-RUN pip install --no-cache-dir -r requirements.txt
+# 安装Python依赖（可选 PIP_INDEX_URL 指定镜像源，默认 pypi.org）
+ARG PIP_INDEX_URL=
+RUN pip install --no-cache-dir ${PIP_INDEX_URL:+--index-url "$PIP_INDEX_URL"} -r requirements.txt
 
 # 复制项目文件
 COPY . .

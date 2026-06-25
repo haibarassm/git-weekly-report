@@ -86,6 +86,26 @@ class Config:
 
         return ["."]
 
+    def to_container_path(self, host_path: str) -> str:
+        """容器内把宿主机项目路径转成挂载路径（本地原样返回）。
+
+        Docker 把宿主项目目录（如 C:\\\\Users\\\\sherry\\\\project）挂到 /app/project，
+        而 projects.json 里的 source 路径是宿主绝对路径，需转成容器路径才读得到仓库。
+        本地运行（无 PROJECT_BASE_DIR 环境变量）时直接原样返回。
+        """
+        import os
+        container_base = os.getenv("PROJECT_BASE_DIR")
+        if not container_base or not host_path:
+            return host_path
+
+        p = str(host_path).replace("\\", "/")
+        for host_dir in self.get_project_dirs() or []:
+            h = str(host_dir).replace("\\", "/")
+            if p.lower().startswith(h.lower()):
+                rel = p[len(h):].lstrip("/")
+                return str(Path(container_base) / rel) if rel else container_base
+        return host_path
+
     @property
     def base_dir(self) -> str:
         return self.get_base_dir()

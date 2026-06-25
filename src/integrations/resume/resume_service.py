@@ -97,7 +97,7 @@ class ResumeService:
                 # 优先使用项目级别的作者，否则使用全局配置的作者
                 project_author = project.get("author") or self.config.get_author()
                 commits = self.fetcher.fetch(
-                    repo_path=source.get("path"),
+                    repo_path=self.config.to_container_path(source.get("path")),
                     branch=source.get("branch", "main"),
                     author=project_author
                     # 不传 days，获取全部 commits
@@ -145,7 +145,7 @@ class ResumeService:
                 primary_source = project.get("sources")[0]
 
             git_ctx = self.git_service.get_context(
-                path=primary_source.get("path", "") if primary_source else "",
+                path=self.config.to_container_path(primary_source.get("path", "")) if primary_source else "",
                 branch=primary_source.get("branch", "main") if primary_source else "main"
             )
             logger.info(f">>> [简历生成] Git context 来源: {primary_source.get('path') if primary_source else 'None'}")
@@ -220,10 +220,11 @@ class ResumeService:
                 # 获取所有源的 commits
                 all_commits = []
                 for source_idx, source in enumerate(project.get("sources", [])):
+                    project_author = project.get("author") or self.config.get_author()
                     commits = self.fetcher.fetch(
-                        repo_path=source.get("path"),
+                        repo_path=self.config.to_container_path(source.get("path")),
                         branch=source.get("branch", "main"),
-                        author=self.config.get_author()
+                        author=project_author
                     )
                     logger.info(f">>> [简历生成] [线程{idx}] 源 {source.get('path')}: 获取 {len(commits)} 条 commits")
                     all_commits.extend(commits)
@@ -316,6 +317,7 @@ class ResumeService:
             "period": period,
             "description": result.get("description", project.get("description", "")),
             "main_contributions": result.get("main_contributions", []),
+            "key_achievements": result.get("key_achievements", []),
             "tech_stack": ", ".join(project.get("tech_stack", [])),
             "bullets": result.get("key_achievements", []),
             "highlights": project.get("highlights", []),
@@ -363,6 +365,7 @@ class ResumeService:
             "period": period,
             "description": summary.description,
             "main_contributions": summary.main_contributions,
+            "key_achievements": summary.key_achievements,
             "tech_stack": ", ".join(project.get("tech_stack", [])),
             "bullets": bullets,
             "highlights": project.get("highlights", []),
@@ -513,6 +516,7 @@ class ResumeService:
             if not company_info:
                 logger.warning(f">>> [简历生成] 公司不存在: {company_id}")
                 continue
+            company_period = ""
 
             logger.info(f">>> [简历生成] 处理公司: {company_info['name']}, 项目数: {len(projects)}")
             for p in projects:
@@ -559,7 +563,7 @@ class ResumeService:
                     else:
                         company_period = f"{company_start}—至今"
                 else:
-                    company_period = f"{start_periods[0]}—至今"
+                    company_period = ""
 
             logger.info(f">>> [简历生成] 公司: {company_info['name']}, 时间: {company_period}")
 

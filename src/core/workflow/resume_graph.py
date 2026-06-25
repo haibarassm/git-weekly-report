@@ -17,6 +17,7 @@ from ..git.default_classifier import DefaultCommitClassifier
 from ..git.module_aggregator import ModuleAggregator
 from ..git.task_classifier import CommitFilter
 from ..llm.client import get_llm_client
+from ..validators.resume_content import sanitize_resume_generation
 
 logger = logging.getLogger(__name__)
 
@@ -252,11 +253,11 @@ class ResumeGenerationWorkflow:
             for m in modules[:3]
         ]
 
-        return {
+        return sanitize_resume_generation({
             "description": description,
             "main_contributions": main_contributions,
             "key_achievements": key_achievements
-        }
+        }, config)
 
     def _parse_generate_response(self, response: str, config: dict) -> dict:
         """解析 LLM 生成响应"""
@@ -296,11 +297,11 @@ class ResumeGenerationWorkflow:
             if config.get("description"):
                 result["description"] = config["description"]
 
-            return {
+            return sanitize_resume_generation({
                 "description": result.get("description", config.get("description", "")),
                 "main_contributions": result.get("main_contributions", []),
                 "key_achievements": result.get("key_achievements", [])
-            }
+            }, config)
         except (json.JSONDecodeError, ValueError) as e:
             logger.warning(f"[generate] JSON 解析失败: {e}, 响应内容: {response[:200]}, 使用 config fallback")
             return self._generate_from_config(config)

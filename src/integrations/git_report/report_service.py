@@ -449,4 +449,4 @@ class ReportService:
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(metadata)
 
-        return filepath
+        return filepath.resolve()
