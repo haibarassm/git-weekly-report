@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [v0.7.3] - 2026-06-25
+
+### ✨ 新功能
+
+- feat: 简历生成内容清洗 guardrails（`resume_content.py`，跨项目内容/夸大词/虚假百分比/技术手段当贡献）
+- feat: 简历生成 Tab 接入 Gradio UI（`gradio_server` 改用 `gr.Tabs`）
+- feat: 简历 Docker 路径转换（`Config.to_container_path`，宿主路径 → `/app/project`）
+- feat: Docker 部署时自动同步 `config/` 到 `~/.naps/`（仓库 config 为唯一来源，消除漂移）
+- feat: LangSmith `api_key` 支持环境变量 `LANGCHAIN_API_KEY`（不把密钥写进版本库）
+
+### 🐛 问题修复
+
+- fix: Docker 容器崩溃循环（`langchain_ollama` 缺失，重建镜像烤入依赖）
+- fix: 周报「当前项目」下拉和分支为空（挂载路径 `projects` → `project`）
+- fix: 周报生成 `IsADirectoryError: /app`（author 占位符过滤不到 commits、空文件返回 `None`、`_save_report` 返回绝对路径）
+- fix: naps 模块分类（收单 → 收单支付、投诉 → 投诉），最低模块提交数 2 → 1
+
+### 📝 文档 / 构建
+
+- 新增 `CLAUDE.md`（架构地图、关键文件、运行/测试/部署、配置架构、坑）
+- `Dockerfile` 加 `PIP_INDEX_URL` 镜像源参数；`start.sh` 修正挂载与构建镜像源
+
 ## [v0.7.2] - 2026-04-30
 
 ### ✨ 新功能
