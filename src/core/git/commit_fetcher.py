@@ -36,6 +36,17 @@ class CommitFetcher:
         """
         repo = Repo(repo_path)
 
+        # 解析分支引用：get_branches 同时返回本地和远程分支，选中的分支名可能只存在于远程。
+        # 优先用本地分支，否则回退到远程跟踪分支 origin/<branch>，避免 iter_commits 找不到引用。
+        ref = branch
+        if not any(h.name == branch for h in repo.heads):
+            remote_ref = f"origin/{branch}"
+            try:
+                if any(r.name == remote_ref for r in repo.remote().refs):
+                    ref = remote_ref
+            except Exception:
+                pass
+
         # 计算时间范围
         log_kwargs = {}
         if since:
@@ -48,7 +59,7 @@ class CommitFetcher:
             log_kwargs["author"] = author
 
         commits = []
-        for commit in repo.iter_commits(branch, **log_kwargs):
+        for commit in repo.iter_commits(ref, **log_kwargs):
             commits.append({
                 "hash": commit.hexsha[:7],
                 "author": str(commit.author.name),
