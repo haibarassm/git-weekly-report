@@ -1,4 +1,4 @@
-"""Gradio UI - V0.6（纯前端层）"""
+"""Gradio UI - 纯前端层"""
 import gradio as gr
 from pathlib import Path
 import sys
@@ -10,7 +10,7 @@ from config import config
 
 
 class ReportAppV06:
-    """周报生成应用 - 纯 UI 层"""
+    """NAPS 生成工具 - 纯 UI 层"""
 
     def __init__(self):
         self.service = ReportService()
@@ -18,7 +18,7 @@ class ReportAppV06:
     # ---- UI 事件处理（薄层，只做数据转换和调用 service）----
 
     def _on_generate(self, selected_branches: list, days: int, mode_cn: str, progress=gr.Progress()):
-        """生成按钮事件"""
+        """周报生成按钮事件"""
         mode = "simple" if mode_cn == "简约模式" else "professional"
 
         if not selected_branches:
@@ -38,31 +38,6 @@ class ReportAppV06:
             logging.exception("生成失败")
             return f"生成失败: {str(e)}", None
 
-    def _on_add(self, selected_list, current_proj, current_branches):
-        """添加分支"""
-        if not current_proj or not current_branches:
-            return selected_list, gr.update(), selected_list
-        new_entries = [f"{current_proj}/{b}" for b in current_branches]
-        combined = list(selected_list) if selected_list else []
-        for entry in new_entries:
-            if entry not in combined:
-                combined.append(entry)
-        count = len(combined)
-        return (
-            gr.update(choices=combined, value=combined),
-            gr.update(value=f"**已选择**: {count} 个项目/分支"),
-            combined,
-        )
-
-    def _on_remove(self, selected_list):
-        """移除分支"""
-        count = len(selected_list) if selected_list else 0
-        return (
-            gr.update(value=selected_list),
-            gr.update(value=f"**已选择**: {count} 个项目/分支"),
-            selected_list if selected_list else [],
-        )
-
     # ---- UI 构建 ----
 
     def create_ui(self):
@@ -79,8 +54,8 @@ class ReportAppV06:
 
             with gr.Tabs():
                 with gr.Tab("📊 周报"):
-                    (current_project, current_branches, add_btn, selected_branches,
-                     selected_count, days, mode, refresh_btn, clear_btn,
+                    (current_project, selected_branches, selected_count, selected_state,
+                     days, mode, refresh_btn, clear_btn,
                      generate_btn, output, download_file) = self._build_weekly_tab(service)
                 with gr.Tab("📅 日报"):
                     create_daily_report_tab(config)
@@ -93,28 +68,9 @@ class ReportAppV06:
                         with gr.Tab("公司管理"):
                             create_company_manage_tab()
 
-            # 隐藏状态
-            selected_state = gr.State([])
-
             # ---- 事件绑定 ----
-
-            current_project.change(
-                fn=lambda proj: gr.update(choices=service.get_branches(proj), value=None),
-                inputs=[current_project],
-                outputs=[current_branches],
-            )
-
-            add_btn.click(
-                fn=self._on_add,
-                inputs=[selected_state, current_project, current_branches],
-                outputs=[selected_branches, selected_count, selected_state],
-            )
-
-            selected_branches.change(
-                fn=self._on_remove,
-                inputs=[selected_branches],
-                outputs=[selected_branches, selected_count, selected_state],
-            )
+            # 注：项目/分支选择器的交互（项目→分支联动、添加、移除）已封装在
+            # create_branch_selector 内部，这里只绑周报专属的刷新/清空/生成。
 
             refresh_btn.click(
                 fn=lambda: gr.update(choices=service.get_projects(), value=None),
@@ -140,37 +96,12 @@ class ReportAppV06:
 
     def _build_weekly_tab(self, service):
         """构建周报 tab 的 UI，返回事件绑定需要的组件"""
+        from ui.components import create_branch_selector
+
         with gr.Row():
-            # 左列：项目选择
+            # 左列：项目/分支选择（公共组件）
             with gr.Column(scale=1):
-                gr.Markdown("### 选择项目")
-                current_project = gr.Dropdown(
-                    label="当前项目",
-                    choices=service.get_projects(),
-                    interactive=True,
-                )
-
-                gr.Markdown("### 选择分支")
-                current_branches = gr.Dropdown(
-                    label="当前项目的分支（输入搜索，可多选）",
-                    choices=[],
-                    interactive=True,
-                    multiselect=True,
-                    allow_custom_value=False,
-                    filterable=True,
-                )
-
-                add_btn = gr.Button("➕ 添加到列表", variant="primary", size="sm")
-
-                gr.Markdown("---")
-                gr.Markdown("### 已选择")
-                selected_branches = gr.CheckboxGroup(
-                    label="已选择（可取消勾选移除）",
-                    choices=[],
-                    interactive=True,
-                )
-                selected_count = gr.Markdown("**已选择**: 0 个项目/分支")
-
+                sel = create_branch_selector(service)
                 gr.Markdown("---")
                 gr.Markdown("""
                 **使用说明**
@@ -207,8 +138,8 @@ class ReportAppV06:
                 output = gr.Textbox(label="周报内容", lines=15)
                 download_file = gr.File(label="下载周报", visible=True)
 
-        return (current_project, current_branches, add_btn, selected_branches,
-                selected_count, days, mode, refresh_btn, clear_btn,
+        return (sel["current_project"], sel["selected_branches"], sel["selected_count"],
+                sel["selected_state"], days, mode, refresh_btn, clear_btn,
                 generate_btn, output, download_file)
 
 

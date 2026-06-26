@@ -4,6 +4,7 @@ import logging
 import gradio as gr
 
 from integrations.daily_report.daily_report_service import DailyReportService
+from ui.components import create_branch_selector
 
 
 def create_daily_report_tab(config):
@@ -13,32 +14,8 @@ def create_daily_report_tab(config):
     with gr.Row():
         # 左列：项目/分支选择 + 时间范围 + 生成
         with gr.Column(scale=1):
-            gr.Markdown("### 选择项目")
-            current_project = gr.Dropdown(
-                label="当前项目",
-                choices=service.get_projects(),
-                interactive=True,
-            )
-
-            gr.Markdown("### 选择分支")
-            current_branches = gr.Dropdown(
-                label="当前项目的分支（输入搜索，可多选）",
-                choices=[],
-                interactive=True,
-                multiselect=True,
-                allow_custom_value=False,
-                filterable=True,
-            )
-            add_btn = gr.Button("➕ 添加到列表", variant="primary", size="sm")
-
-            gr.Markdown("---")
-            gr.Markdown("### 已选择")
-            selected_branches = gr.CheckboxGroup(
-                label="已选择（取消勾选即移除）",
-                choices=[],
-                interactive=True,
-            )
-            selected_count = gr.Markdown("**已选择**: 0 个项目/分支")
+            sel = create_branch_selector(service)
+            selected_state = sel["selected_state"]
 
             gr.Markdown("---")
             gr.Markdown("### 时间范围")
@@ -60,32 +37,6 @@ def create_daily_report_tab(config):
             output = gr.Textbox(label="日报内容", lines=18)
             download_file = gr.File(label="下载日报")
 
-    # 隐藏状态
-    selected_state = gr.State([])
-
-    def _on_add(selected_list, current_proj, current_branches):
-        if not current_proj or not current_branches:
-            return selected_list, gr.update(), selected_list
-        new_entries = [f"{current_proj}/{b}" for b in current_branches]
-        combined = list(selected_list) if selected_list else []
-        for entry in new_entries:
-            if entry not in combined:
-                combined.append(entry)
-        count = len(combined)
-        return (
-            gr.update(choices=combined, value=combined),
-            gr.update(value=f"**已选择**: {count} 个项目/分支"),
-            combined,
-        )
-
-    def _on_remove(selected_list):
-        count = len(selected_list) if selected_list else 0
-        return (
-            gr.update(value=selected_list),
-            gr.update(value=f"**已选择**: {count} 个项目/分支"),
-            selected_list if selected_list else [],
-        )
-
     def _on_generate(selected_list, days_count, progress=gr.Progress()):
         if not selected_list:
             return "请先添加项目和分支", None
@@ -101,29 +52,10 @@ def create_daily_report_tab(config):
             logging.exception("日报生成失败")
             return f"生成失败: {str(e)}", None
 
-    # 事件绑定
-    current_project.change(
-        fn=lambda proj: gr.update(choices=service.get_branches(proj), value=None),
-        inputs=[current_project],
-        outputs=[current_branches],
-    )
-
-    add_btn.click(
-        fn=_on_add,
-        inputs=[selected_state, current_project, current_branches],
-        outputs=[selected_branches, selected_count, selected_state],
-    )
-
-    selected_branches.change(
-        fn=_on_remove,
-        inputs=[selected_branches],
-        outputs=[selected_branches, selected_count, selected_state],
-    )
-
     generate_btn.click(
         fn=_on_generate,
         inputs=[selected_state, days],
         outputs=[output, download_file],
     )
 
-    return [current_project, selected_branches, days, output, download_file]
+    return [sel["current_project"], sel["selected_branches"], days, output, download_file]
