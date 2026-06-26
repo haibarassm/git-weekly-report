@@ -69,6 +69,8 @@ class ReportAppV06:
         """创建 Gradio 界面"""
         from ui.tabs.resume_generate_tab import create_resume_generate_tab
         from ui.tabs.daily_report_tab import create_daily_report_tab
+        from ui.tabs.resume_manage_tab import create_resume_manage_tab
+        from ui.tabs.company_manage_tab import create_company_manage_tab
         service = self.service
 
         with gr.Blocks(title="NAPS 生成工具", theme=gr.themes.Base()) as app:
@@ -82,8 +84,14 @@ class ReportAppV06:
                      generate_btn, output, download_file) = self._build_weekly_tab(service)
                 with gr.Tab("📅 日报"):
                     create_daily_report_tab(config)
-                with gr.Tab("📄 简历生成"):
-                    create_resume_generate_tab(config)
+                with gr.Tab("📄 简历"):
+                    with gr.Tabs():
+                        with gr.Tab("简历生成"):
+                            create_resume_generate_tab(config)
+                        with gr.Tab("简历模板管理"):
+                            create_resume_manage_tab(config)
+                        with gr.Tab("公司管理"):
+                            create_company_manage_tab()
 
             # 隐藏状态
             selected_state = gr.State([])

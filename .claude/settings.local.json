@@ -39,7 +39,8 @@
       "Bash(.venv/Scripts/python.exe -m py_compile src/core/git/default_classifier.py)",
       "Bash(ls -lt C:Userssherryprojectnaps_report_generatoroutputs/*.docx)",
       "Bash(.venv/Scripts/python.exe -m pytest tests/test_document_builder.py tests/test_font_and_time.py -v --tb=short)",
-      "Bash(.venv/Scripts/python.exe check_work_experience.py)"
+      "Bash(.venv/Scripts/python.exe check_work_experience.py)",
+      "Bash(grep -iA2 \"pip\\\\|install\\\\|警告\\\\|error\\\\|warning\")"
     ]
   },
   "enableAllProjectMcpServers": true,
