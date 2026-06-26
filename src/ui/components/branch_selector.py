@@ -15,17 +15,23 @@ def create_branch_selector(service):
     Returns:
         dict: current_project, selected_branches, selected_count, selected_state
     """
+    # 首次加载就用第一个项目初始化，否则默认选中的项目不会触发 .change、分支下拉是空的
+    projects = service.get_projects()
+    initial_project = projects[0] if projects else None
+    initial_branches = service.get_branches(initial_project) if initial_project else []
+
     gr.Markdown("### 选择项目")
     current_project = gr.Dropdown(
         label="当前项目",
-        choices=service.get_projects(),
+        choices=projects,
+        value=initial_project,
         interactive=True,
     )
 
     gr.Markdown("### 选择分支")
     current_branches = gr.Dropdown(
         label="当前项目的分支（输入搜索，可多选）",
-        choices=[],
+        choices=initial_branches,
         interactive=True,
         multiselect=True,
         allow_custom_value=False,
